@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pranay.jobtracker.data.JobApplication
 import com.pranay.jobtracker.data.JobApplicationRepository
-import com.pranay.jobtracker.domain.GmailSyncManager
-import com.pranay.jobtracker.domain.SyncEmailsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

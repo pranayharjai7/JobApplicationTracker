@@ -1,7 +1,6 @@
 package com.pranay.jobtracker.domain
 
 import com.pranay.jobtracker.domain.ai.AIProviderFactory
-import com.pranay.jobtracker.BuildConfig
 import com.pranay.jobtracker.data.EmailEventRepository
 import com.pranay.jobtracker.data.JobApplicationRepository
 import javax.inject.Inject

@@ -3,7 +3,6 @@ package com.pranay.jobtracker.domain
 import com.pranay.jobtracker.domain.ai.AIProviderFactory
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import com.pranay.jobtracker.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Locale
 

@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.pranay.jobtracker.data.AccountInfo
 import com.pranay.jobtracker.data.EmailEvent
 import com.pranay.jobtracker.data.ApplicationStage
 

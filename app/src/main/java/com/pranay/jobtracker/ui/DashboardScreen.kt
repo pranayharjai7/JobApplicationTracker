@@ -10,16 +10,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*

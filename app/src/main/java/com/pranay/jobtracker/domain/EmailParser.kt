@@ -1,7 +1,5 @@
 package com.pranay.jobtracker.domain
 
-import com.pranay.jobtracker.data.JobApplication
-
 /**
  * Interface representing the AI/NLP Service that parses raw email text
  * into structured [ParsedEmailInfo] for each detected job application.
