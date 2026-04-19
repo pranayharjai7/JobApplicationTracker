@@ -1,28 +1,33 @@
 # 📋 Job Application Tracker
 
-An intelligent Android application built with **Kotlin** and **Jetpack Compose** that helps you organize and track your job search journey automatically by syncing with your Gmail.
+An intelligent Android application built with **Kotlin** and **Jetpack Compose** that helps you organize and track your job search journey automatically by syncing with your Gmail and using advanced AI for data extraction.
 
 ## ✨ Features
 
--   **🔄 Gmail Sync:** Automatically scans your inbox for job-related emails (applications, interviews, offers).
--   **🤖 AI-Powered Parsing:** Uses **Google Gemini AI (Gemini Flash)** to extract structured data from raw email content (Company, Job Title, Date, Status, etc.).
--   **👥 Multi-Account Support:** Connect and manage multiple Gmail accounts simultaneously. Switch between accounts to see applications from different email addresses.
--   **📊 Dashboard:** A clean, Material 3-based interface to view all your applications, stats, and recent activity at a glance.
--   **🔍 Detailed View:** Dive into the specifics of each application, including parsed notes, recruiter contact info, and status history.
--   **📂 Local Storage:** Keeps your data persistent and accessible offline using **Room Database**.
--   **🔒 Secure Auth:** Integrated with **Google Sign-In** for seamless and secure access to your emails.
+-   **🔄 Gmail Sync:** Automatically scans your inbox for job-related emails (applications, interviews, offers) with a modern, animated sync control.
+-   **🤖 Flexible AI Provider System:** Powered by a robust backend supporting **Groq (Llama 3)**, **Google Gemini**, and **OpenRouter** with intelligent fallback logic.
+-   **🛤️ Journey View:** Visualize the entire chronological timeline of your application stages, from initial submission to final offer or rejection.
+-   **🔥 Activity Heatmap:** Track your job search intensity over time with a GitHub-style activity heatmap and time-based filtering.
+-   **🔍 Advanced Smart Filtering:** 
+    -   **AI-Powered Suggestions:** Get smart filter recommendations based on your activity.
+    -   **Multi-Stage Tracking:** Filter by specific application statuses.
+    -   **Company Normalization:** Consolidated views for applications to the same company across different roles.
+-   **👥 Multi-Account Support:** Connect and manage multiple Gmail accounts simultaneously with a refined account switcher.
+-   **📊 Dashboard:** A Material 3 interface featuring stats, recent activity, and quick-access filters.
+-   **🔒 Secure & Private:** Local-first storage with **Room Database** and secure **Google Sign-In** integration.
 
 ## 🛠️ Tech Stack
 
 -   **Language:** [Kotlin](https://kotlinlang.org/)
 -   **UI Framework:** [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3)
--   **Dependency Injection:** [Hilt](https://developer.android.com/training/dependency-injection/hilt-android)
--   **Database:** [Room](https://developer.android.com/training/data-storage/room) with KSP
--   **Networking & APIs:**
-    -   Gmail API
-    -   Google Play Services Auth
+-   **AI Integration:** 
+    -   Groq SDK / Llama 3
     -   Google AI SDK (Gemini Flash)
--   **Architecture:** MVVM (Model-View-ViewModel) with Clean Architecture principles.
+    -   OpenRouter API
+-   **Dependency Injection:** [Hilt](https://developer.android.com/training/dependency-injection/hilt-android)
+-   **Database:** [Room](https://developer.android.com/training/data-storage/room) with KSP and custom Migrations
+-   **Networking:** Gmail API, Retrofit/HttpURLConnection for AI Providers
+-   **Architecture:** MVVM with Clean Architecture principles
 
 ## 🚀 Getting Started
 
@@ -30,7 +35,7 @@ An intelligent Android application built with **Kotlin** and **Jetpack Compose**
 
 -   Android Studio Iguana or newer.
 -   A Google Cloud Project with Gmail API enabled.
--   A Gemini API Key from [Google AI Studio](https://aistudio.google.com/).
+-   API Keys for your preferred AI providers (Groq, Gemini, or OpenRouter).
 
 ### Setup
 
@@ -40,27 +45,30 @@ An intelligent Android application built with **Kotlin** and **Jetpack Compose**
     ```
 
 2.  **Add your API Keys:**
-    Create a `local.properties` file in the root directory and add your Gemini API Key:
+    Create a `local.properties` file in the root directory and add your keys:
     ```properties
-    GEMINI_API_KEY=your_gemini_api_key_here
+    GEMINI_API_KEY=your_gemini_key
+    GROQ_API_KEY=your_groq_key
+    OPENROUTER_API_KEY=your_openrouter_key
     ```
+    *The app will use available keys in order of preference: Groq -> Gemini -> OpenRouter.*
 
 3.  **Google Services:**
     -   Place your `google-services.json` in the `app/` directory.
-    -   Configure your OAuth 2.0 Client ID in the Google Cloud Console for Android.
+    -   Configure your OAuth 2.0 Client ID for Android in the Google Cloud Console.
 
 4.  **Build & Run:**
-    Sync the project with Gradle files and run the app on your device or emulator.
+    Sync Gradle and run the app.
 
 ## 📸 Screenshots
 
-| Dashboard | Application Detail | Account Switcher |
+| Dashboard & Heatmap | Application Journey | Smart Filters |
 | :---: | :---: | :---: |
-| ![Dashboard](https://via.placeholder.com/300x600?text=Dashboard) | ![Detail](https://via.placeholder.com/300x600?text=Application+Detail) | ![Accounts](https://via.placeholder.com/300x600?text=Account+Switcher) |
+| ![Dashboard](https://via.placeholder.com/300x600?text=Heatmap+&+Dashboard) | ![Journey](https://via.placeholder.com/300x600?text=Application+Timeline) | ![Filters](https://via.placeholder.com/300x600?text=AI+Smart+Filters) |
 
 ## 🤝 Contributing
 
-Contributions are welcome! If you find any bugs or have feature suggestions, please open an issue or submit a pull request.
+Contributions are welcome! Feel free to open issues or submit PRs for new AI provider integrations or UI enhancements.
 
 ## 📜 License
 
