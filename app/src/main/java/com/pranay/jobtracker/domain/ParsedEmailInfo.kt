@@ -5,6 +5,8 @@ data class ParsedEmailInfo(
     val companyName: String,
     val jobTitle: String,
     val status: String,
+    val stage: String,
+    val subStatus: String?,
     val dateStr: String,
     val dateEpochMs: Long,      // parsed from dateStr; 0 if unparseable
     val recruiterEmail: String?,

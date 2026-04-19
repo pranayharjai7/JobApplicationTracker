@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import com.pranay.jobtracker.data.ApplicationStage
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +63,7 @@ fun DashboardScreen(
     val companyGroups by viewModel.companyGroups.collectAsState()
     val timeFilter by viewModel.timeFilter.collectAsState()
     val heatmapData by viewModel.heatmapData.collectAsState()
+    val selectedStages by viewModel.selectedStages.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -158,6 +160,27 @@ fun DashboardScreen(
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Color(0xFF5C6BC0).copy(alpha = 0.2f),
                                 selectedLabelColor = Color(0xFF5C6BC0)
+                            )
+                        )
+                    }
+                }
+
+                // Status Filter Section
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    items(ApplicationStage.values()) { stage ->
+                        val isSelected = selectedStages.contains(stage)
+                        val stageColor = stage.getColor()
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.toggleStageFilter(stage) },
+                            label = { Text(stage.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = stageColor.copy(alpha = 0.2f),
+                                selectedLabelColor = stageColor,
+                                labelColor = Color(0xFFA0A0A0)
                             )
                         )
                     }
@@ -355,7 +378,7 @@ fun HeaderSection(
 fun StatsSection(apps: List<JobApplication>) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         StatCard(title = "Total", count = apps.size.toString(), modifier = Modifier.weight(1f))
-        StatCard(title = "Interviews", count = apps.count { it.status.contains("Interview") }.toString(), modifier = Modifier.weight(1f))
+        StatCard(title = "Interviews", count = apps.count { it.stage == ApplicationStage.INTERVIEW.name }.toString(), modifier = Modifier.weight(1f))
     }
 }
 
@@ -398,34 +421,31 @@ fun ApplicationCard(app: JobApplication, accountColor: Color, onClick: (Int) -> 
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Badge(status = app.status)
+                val stageEnum = runCatching { ApplicationStage.valueOf(app.stage) }.getOrDefault(ApplicationStage.APPLIED)
+                Badge(stage = stageEnum)
                 Text(app.dateApplied, color = Color(0xFFA0A0A0), style = MaterialTheme.typography.bodySmall)
+            }
+            if (!app.subStatus.isNullOrBlank() && app.subStatus != app.status) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(app.subStatus!!, color = Color(0xFFB0B0B0), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
 
 @Composable
-fun Badge(status: String) {
-    val bgColor = when {
-        status.contains("Interview") -> Color(0xFF4CAF50).copy(alpha = 0.2f)
-        status.contains("Reject") -> Color(0xFFF44336).copy(alpha = 0.2f)
-        else -> Color(0xFF5C6BC0).copy(alpha = 0.2f)
-    }
-    val textColor = when {
-        status.contains("Interview") -> Color(0xFF4CAF50)
-        status.contains("Reject") -> Color(0xFFF44336)
-        else -> Color(0xFF5C6BC0)
-    }
+fun Badge(stage: ApplicationStage) {
+    val baseColor = stage.getColor()
     
     Box(
         modifier = Modifier
-            .background(bgColor, RoundedCornerShape(4.dp))
+            .background(baseColor.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Text(status, color = textColor, style = MaterialTheme.typography.labelSmall)
+        Text(stage.label.uppercase(), style = MaterialTheme.typography.labelSmall, color = baseColor)
     }
 }
 
@@ -466,6 +486,16 @@ fun EmptyStateView(onAddAccountClick: () -> Unit) {
             Text("Add Account")
         }
     }
+}
+
+fun ApplicationStage.getColor(): Color = when(this) {
+    ApplicationStage.APPLIED -> Color(0xFF9E9E9E)       // Gray
+    ApplicationStage.IN_REVIEW -> Color(0xFF29B6F6)     // Light Blue
+    ApplicationStage.ASSESSMENT -> Color(0xFFFFA726)    // Orange
+    ApplicationStage.INTERVIEW -> Color(0xFFAB47BC)     // Purple
+    ApplicationStage.OFFER -> Color(0xFF66BB6A)         // Green
+    ApplicationStage.REJECTED -> Color(0xFFEF5350)      // Red
+    ApplicationStage.WITHDRAWN -> Color(0xFF8D6E63)     // Brown
 }
 
 @Composable

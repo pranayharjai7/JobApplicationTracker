@@ -47,14 +47,19 @@ class RealEmailParserImpl(
                 "sourceEmailId": "The 'Email ID' specified for this email",
                 "companyName": "Example Co",
                 "jobTitle": "Engineer",
+                "stage": "APPLIED",
+                "subStatus": "Recruiter Phone Screen Scheduled",
                 "status": "Applied",
                 "dateApplied": "Wed, 8 Apr",
                 "recruiterEmail": "hr@example.com",
                 "notes": "They received the application."
               }
             ]
-            Do not include any markdown formatting like ```json or anything else. Just the raw JSON block.
-            If an email is definitively NOT about a job application, strictly ignore it and do NOT include it in the array.
+            Important Instructions:
+            - "stage" MUST BE exactly one of: APPLIED, IN_REVIEW, ASSESSMENT, INTERVIEW, OFFER, REJECTED, WITHDRAWN.
+            - "subStatus" should strictly hold contextual metadata (e.g., 'OA received', 'Round 1 Completed', 'Contract Sent').
+            - Do not include any markdown formatting like ```json or anything else. Just the raw JSON block.
+            - If an email is definitively NOT about a job application, strictly ignore it and do NOT include it in the array.
 
             EMAILS TO PROCESS:
             $emailsText
@@ -82,7 +87,9 @@ class RealEmailParserImpl(
                     sourceEmailId  = dto.sourceEmailId ?: emailData.emailId,
                     companyName    = dto.companyName ?: "Unknown Company",
                     jobTitle       = dto.jobTitle ?: "Unknown Role",
-                    status         = dto.status ?: "Unknown",
+                    status         = dto.status ?: dto.stage ?: "Unknown",
+                    stage          = dto.stage ?: "APPLIED",
+                    subStatus      = dto.subStatus,
                     dateStr        = dateStr,
                     dateEpochMs    = parseRfc2822ToEpoch(emailData.date), // Always use raw email date for exact Epoch precision
                     recruiterEmail = dto.recruiterEmail,
@@ -109,6 +116,8 @@ class RealEmailParserImpl(
         val sourceEmailId: String?,
         val companyName: String?,
         val jobTitle: String?,
+        val stage: String?,
+        val subStatus: String?,
         val status: String?,
         val dateApplied: String?,
         val recruiterEmail: String?,

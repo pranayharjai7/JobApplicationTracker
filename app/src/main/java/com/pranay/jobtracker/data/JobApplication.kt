@@ -24,5 +24,7 @@ data class JobApplication(
     val createdAt: Long = 0L,
     val lastUpdatedAt: Long = 0L,
     val summary: String? = null,
-    val accountId: String = "legacy_account"
+    val accountId: String = "legacy_account",
+    val stage: String = "APPLIED",
+    val subStatus: String? = null
 )

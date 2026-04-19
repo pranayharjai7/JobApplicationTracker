@@ -27,6 +27,8 @@ class MockEmailParserImpl : EmailParser {
                     companyName   = "Google",
                     jobTitle      = "Software Engineer",
                     status        = "Interview Scheduled",
+                    stage         = "INTERVIEW",
+                    subStatus     = null,
                     dateStr       = email.date,
                     dateEpochMs   = 0L,
                     recruiterEmail = "recruiting@google.com",

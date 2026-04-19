@@ -36,7 +36,9 @@ class MatchOrCreateJobApplicationUseCase @Inject constructor(
                 emailId        = parsedInfo.sourceEmailId,
                 accountId      = accountId,
                 createdAt      = parsedInfo.dateEpochMs,
-                lastUpdatedAt  = parsedInfo.dateEpochMs
+                lastUpdatedAt  = parsedInfo.dateEpochMs,
+                stage          = parsedInfo.stage.ifBlank { "APPLIED" },
+                subStatus      = parsedInfo.subStatus
             )
             val id = appRepository.insertSingleApplication(newApp)
             Pair(newApp.copy(id = id.toInt()), true)

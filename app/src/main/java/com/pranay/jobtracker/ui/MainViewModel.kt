@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.pranay.jobtracker.data.ApplicationStage
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -37,7 +38,8 @@ private data class FilterState(
     val accountId: String,
     val selected: Set<String>,
     val groups: Map<String, List<String>>,
-    val tFilter: TimeFilter
+    val tFilter: TimeFilter,
+    val selectedStages: Set<ApplicationStage>
 )
 
 @HiltViewModel
@@ -68,14 +70,16 @@ class MainViewModel @Inject constructor(
 
     val selectedCompanies = MutableStateFlow<Set<String>>(emptySet())
     val timeFilter = MutableStateFlow(TimeFilter.ALL)
+    val selectedStages = MutableStateFlow<Set<ApplicationStage>>(emptySet())
 
     val applications: StateFlow<List<JobApplication>> = combine(
         activeAccountFlow.filterNotNull(),
         selectedCompanies,
         companyGroups,
-        timeFilter
-    ) { accountId, selected, groups, tFilter ->
-        FilterState(accountId, selected, groups, tFilter)
+        timeFilter,
+        selectedStages
+    ) { accountId, selected, groups, tFilter, stages ->
+        FilterState(accountId, selected, groups, tFilter, stages)
     }.flatMapLatest { state ->
         val rawFlow = if (state.selected.isEmpty()) {
             repository.getAllApplications(state.accountId)
@@ -85,9 +89,14 @@ class MainViewModel @Inject constructor(
         }
         
         rawFlow.map { list ->
-            if (state.tFilter.days == null) return@map list
+            // Filter by stage
+            val stageFiltered = if (state.selectedStages.isEmpty()) list 
+                else list.filter { app -> state.selectedStages.map { it.name }.contains(app.stage) }
+                
+            // Filter by time
+            if (state.tFilter.days == null) return@map stageFiltered
             val cutoff = Instant.now().minusSeconds(state.tFilter.days * 86400L).toEpochMilli()
-            list.filter {
+            stageFiltered.filter {
                 val time = if (it.createdAt > 0L) it.createdAt else parseLegacyDate(it.dateApplied)
                 time >= cutoff 
             }
@@ -162,6 +171,15 @@ class MainViewModel @Inject constructor(
 
     fun setTimeFilter(filter: TimeFilter) {
         timeFilter.value = filter
+    }
+
+    fun toggleStageFilter(stage: ApplicationStage) {
+        val current = selectedStages.value
+        selectedStages.value = if (current.contains(stage)) current - stage else current + stage
+    }
+
+    fun clearStageFilters() {
+        selectedStages.value = emptySet()
     }
 
     private fun parseLegacyDate(dateStr: String): Long {

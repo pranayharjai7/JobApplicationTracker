@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pranay.jobtracker.data.AccountInfo
 import com.pranay.jobtracker.data.EmailEvent
+import com.pranay.jobtracker.data.ApplicationStage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,8 +73,9 @@ fun ApplicationDetailScreen(
                     Text(app.jobTitle, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Badge(app.status)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val stageEnum = runCatching { ApplicationStage.valueOf(app.stage) }.getOrDefault(ApplicationStage.APPLIED)
+                    Badge(stage = stageEnum)
                     Text("Applied: ${app.dateApplied}", color = Color.Gray)
                 }
 
@@ -126,7 +129,9 @@ fun EmailEventItem(event: EmailEvent, accountColor: Color) {
                         .background(accountColor)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Badge(status = event.detectedStatus)
+                // EmailEvent's detectedStatus is currently arbitrary. If it matches a stage, use it, else default smoothly.
+                val eventStage = runCatching { ApplicationStage.valueOf(event.detectedStatus.uppercase()) }.getOrDefault(ApplicationStage.IN_REVIEW)
+                Badge(stage = eventStage)
             }
             Text(
                 text = event.date,

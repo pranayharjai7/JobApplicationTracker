@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [JobApplication::class, SyncMetadata::class, EmailEvent::class, AccountInfo::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -88,6 +88,26 @@ abstract class AppDatabase : RoomDatabase() {
 
                 database.execSQL("DROP TABLE sync_metadata")
                 database.execSQL("ALTER TABLE sync_metadata_new RENAME TO sync_metadata")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add Multi-Stage tracking columns
+                database.execSQL("ALTER TABLE applications ADD COLUMN stage TEXT NOT NULL DEFAULT 'APPLIED'")
+                database.execSQL("ALTER TABLE applications ADD COLUMN subStatus TEXT")
+                
+                // Smart Auto-Mapping execution (Option B) 
+                // Uses broad case-insensitive constraints to identify deep status traits, converting up structure
+                database.execSQL("UPDATE applications SET stage = 'INTERVIEW' WHERE LOWER(status) LIKE '%interview%' OR LOWER(status) LIKE '%round%'")
+                database.execSQL("UPDATE applications SET stage = 'OFFER' WHERE LOWER(status) LIKE '%offer%' OR LOWER(status) LIKE '%hired%'")
+                database.execSQL("UPDATE applications SET stage = 'REJECTED' WHERE LOWER(status) LIKE '%reject%' OR LOWER(status) LIKE '%not selected%'")
+                database.execSQL("UPDATE applications SET stage = 'ASSESSMENT' WHERE LOWER(status) LIKE '%assessment%' OR LOWER(status) LIKE '%oa%' OR LOWER(status) LIKE '%test%' OR LOWER(status) LIKE '%assignment%'")
+                database.execSQL("UPDATE applications SET stage = 'WITHDRAWN' WHERE LOWER(status) LIKE '%withdraw%'")
+                database.execSQL("UPDATE applications SET stage = 'IN_REVIEW' WHERE LOWER(status) LIKE '%review%' OR LOWER(status) LIKE '%process%' OR LOWER(status) LIKE '%consideration%'")
+                
+                // Redundancy: Map complete original strings natively to SubStatus to permanently archive specifics
+                database.execSQL("UPDATE applications SET subStatus = status")
             }
         }
     }
