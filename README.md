@@ -1,4 +1,4 @@
-# 📋 Job Application Tracker
+# 📋 JobTrack — Smart Job Application Tracker
 
 An intelligent Android application built with **Kotlin** and **Jetpack Compose** that helps you organize and track your job search journey automatically by syncing with your Gmail and using advanced AI for data extraction.
 
@@ -12,9 +12,18 @@ An intelligent Android application built with **Kotlin** and **Jetpack Compose**
     -   **AI-Powered Suggestions:** Get smart filter recommendations based on your activity.
     -   **Multi-Stage Tracking:** Filter by specific application statuses.
     -   **Company Normalization:** Consolidated views for applications to the same company across different roles.
--   **👥 Multi-Account Support:** Connect and manage multiple Gmail accounts simultaneously with a refined account switcher.
+-   **👥 Multi-Account Support:** Connect and manage multiple Gmail accounts simultaneously with a refined account switcher and per-account data isolation.
 -   **📊 Dashboard:** A Material 3 interface featuring stats, recent activity, and quick-access filters.
--   **🔒 Secure & Private:** Local-first storage with **Room Database** and secure **Google Sign-In** integration.
+-   **🎨 Modern UI/UX:**
+    -   **Splash Screen:** Clean entry experience with branded splash support.
+    -   **Privacy-First:** Dedicated Privacy Policy access within the app.
+    -   **Localization:** Multi-language support for key UI components.
+-   **🔒 Secure & Private:** 
+    -   **On-Device Processing:** Scanning and matching of emails happen primarily on your device.
+    -   **Local-First Storage:** Applications and statuses are stored in a secure on-device **Room Database**.
+    -   **Data Integrity:** We **never** sell, rent, or trade your Gmail data. Information is only sent to AI providers for extraction and is not used for model training.
+    -   **Google Limited Use:** Fully compliant with [Google API Service User Data Policy](https://developers.google.com/terms/api-services-user-data-policy).
+    -   **Full Control:** Wipe all data or remove accounts at any time from the app settings.
 
 ## 🛠️ Tech Stack
 
