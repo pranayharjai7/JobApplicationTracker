@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.*
@@ -42,6 +43,7 @@ fun AccountSwitcherSheet(
 ) {
     val context = LocalContext.current
     val privacyPolicyLink = stringResource(R.string.privacy_policy_link)
+    val termsOfServiceLink = stringResource(R.string.terms_of_service_link)
     var showRemoveDialog by androidx.compose.runtime.remember { mutableStateOf(false) }
     var showWipeDialog by androidx.compose.runtime.remember { mutableStateOf(false) }
     ModalBottomSheet(
@@ -124,6 +126,17 @@ fun AccountSwitcherSheet(
                     color = Color.Gray,
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyLink))
+                        context.startActivity(intent)
+                        onDismiss()
+                    }
+                )
+
+                ActionItem(
+                    text = stringResource(R.string.terms_of_service_title),
+                    icon = Icons.Default.Description,
+                    color = Color.Gray,
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(termsOfServiceLink))
                         context.startActivity(intent)
                         onDismiss()
                     }

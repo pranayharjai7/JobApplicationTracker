@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">JobTrack</string>
     <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="terms_of_service_title">Terms of Service</string>
     <string name="remove_account_title">Remove Account</string>
     <string name="remove_account_message">Are you sure you want to completely remove this account and delete its associated data? You will be signed out.</string>
     <string name="wipe_data_title">Wipe Local Data</string>
@@ -40,4 +41,5 @@
     <string name="action_stop">Stop</string>
     <string name="syncing_status">Syncing... Tap to stop</string>
     <string name="privacy_policy_link">https://github.com/pranayharjai7/JobApplicationTracker/blob/master/PRIVACY_POLICY.md</string>
+    <string name="terms_of_service_link">https://github.com/pranayharjai7/JobApplicationTracker/blob/master/TERMS_OF_SERVICE.md</string>
 </resources>
