@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,8 +32,11 @@ fun AccountSwitcherSheet(
     onAccountSelected: (AccountInfo) -> Unit,
     onAddAccount: () -> Unit,
     onSignOut: (AccountInfo) -> Unit,
-    onRemoveAccount: (AccountInfo) -> Unit
+    onRemoveAccount: (AccountInfo) -> Unit,
+    onWipeData: () -> Unit
 ) {
+    var showRemoveDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showWipeDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E1E1E),
@@ -98,13 +101,67 @@ fun AccountSwitcherSheet(
                     text = "Remove account & delete data",
                     icon = Icons.Default.Delete,
                     color = Color(0xFFF44336),
-                    onClick = {
-                        onRemoveAccount(activeAccount)
-                        onDismiss()
-                    }
+                    onClick = { showRemoveDialog = true }
+                )
+
+                ActionItem(
+                    text = "Wipe all local data",
+                    icon = Icons.Default.Delete,
+                    color = Color(0xFFF44336),
+                    onClick = { showWipeDialog = true }
                 )
             }
         }
+    }
+
+    if (showRemoveDialog && activeAccount != null) {
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = false },
+            title = { Text("Remove Account") },
+            text = { Text("Are you sure you want to completely remove this account and delete its associated data? You will be signed out.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRemoveDialog = false
+                    onRemoveAccount(activeAccount)
+                    onDismiss()
+                }) {
+                    Text("Remove", color = Color(0xFFF44336))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = false }) {
+                    Text("Cancel", color = Color.White)
+                }
+            },
+            containerColor = Color(0xFF1E1E1E),
+            titleContentColor = Color.White,
+            textContentColor = Color(0xFFE0E0E0)
+        )
+    }
+
+    if (showWipeDialog) {
+        AlertDialog(
+            onDismissRequest = { showWipeDialog = false },
+            title = { Text("Wipe Local Data") },
+            text = { Text("Are you sure you want to completely wipe all cached local application data for this app?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showWipeDialog = false
+                    onWipeData()
+                    onDismiss()
+                }) {
+                    Text("Wipe", color = Color(0xFFF44336))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWipeDialog = false }) {
+                    Text("Cancel", color = Color.White)
+                }
+            },
+            containerColor = Color(0xFF1E1E1E),
+            titleContentColor = Color.White,
+            textContentColor = Color(0xFFE0E0E0)
+        )
     }
 }
 

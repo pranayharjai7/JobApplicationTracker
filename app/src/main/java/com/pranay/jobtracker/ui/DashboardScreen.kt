@@ -140,7 +140,6 @@ fun DashboardScreen(
             HeaderSection(
                 activeAccount = activeAccount,
                 onProfileClick = { showAccountSwitcher = true },
-                onDeleteClick = { viewModel.clearDatabase() },
                 onStopClick = { viewModel.stopSyncing() },
                 isSyncing = isSyncing
             )
@@ -248,7 +247,8 @@ fun DashboardScreen(
                     viewModel.accountRepository.removeAccountAndData(account.accountId)
                     googleSignInClient.signOut()
                 }
-            }
+            },
+            onWipeData = { viewModel.clearDatabase() }
         )
     }
 
@@ -288,7 +288,6 @@ fun DashboardScreen(
 fun HeaderSection(
     activeAccount: AccountInfo?,
     onProfileClick: () -> Unit,
-    onDeleteClick: () -> Unit,
     onStopClick: () -> Unit,
     isSyncing: Boolean
 ) {
@@ -302,12 +301,6 @@ fun HeaderSection(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(
-                onClick = onDeleteClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
-            ) {
-                Text("Wipe")
-            }
             if (isSyncing) {
                 Button(
                     onClick = onStopClick,
