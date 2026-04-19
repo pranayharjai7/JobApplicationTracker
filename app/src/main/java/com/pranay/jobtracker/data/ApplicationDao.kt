@@ -12,6 +12,12 @@ interface ApplicationDao {
     @Query("SELECT * FROM applications WHERE accountId = :accountId ORDER BY lastUpdatedAt DESC")
     fun getAllApplications(accountId: String): Flow<List<JobApplication>>
 
+    @Query("SELECT DISTINCT companyName FROM applications WHERE accountId = :accountId AND companyName IS NOT NULL AND companyName != '' ORDER BY companyName ASC")
+    fun getDistinctCompanies(accountId: String): Flow<List<String>>
+
+    @Query("SELECT * FROM applications WHERE accountId = :accountId AND companyName IN (:companies) ORDER BY lastUpdatedAt DESC")
+    fun getApplicationsByCompanies(accountId: String, companies: List<String>): Flow<List<JobApplication>>
+
     @Query("SELECT * FROM applications WHERE id = :id AND accountId = :accountId LIMIT 1")
     fun getApplicationById(id: Int, accountId: String): Flow<JobApplication?>
 

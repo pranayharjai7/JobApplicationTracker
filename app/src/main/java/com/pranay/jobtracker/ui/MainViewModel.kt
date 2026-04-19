@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
@@ -31,12 +33,36 @@ class MainViewModel @Inject constructor(
 
     val activeAccountFlow = accountRepository.activeAccountIdFlow
 
-    val applications: StateFlow<List<JobApplication>> = accountRepository.activeAccountIdFlow
+    private fun normalizeCompany(name: String): String {
+        return name.replace(Regex("(?i)\\b(llc|inc|corp|corporation|ltd|limited)\\b.*"), "")
+            .trim()
+    }
+
+    val companyGroups: StateFlow<Map<String, List<String>>> = activeAccountFlow
         .filterNotNull()
         .flatMapLatest { accountId ->
-            repository.getAllApplications(accountId)
+            repository.getDistinctCompanies(accountId).map { rawList ->
+                rawList.groupBy { normalizeCompany(it) }
+            }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    val selectedCompanies = MutableStateFlow<Set<String>>(emptySet())
+
+    val applications: StateFlow<List<JobApplication>> = combine(
+        activeAccountFlow.filterNotNull(),
+        selectedCompanies,
+        companyGroups
+    ) { accountId, selected, groups ->
+        Triple(accountId, selected, groups)
+    }.flatMapLatest { (accountId, selected, groups) ->
+        if (selected.isEmpty()) {
+            repository.getAllApplications(accountId)
+        } else {
+            val rawCompaniesToFetch = selected.flatMap { groups[it] ?: listOf(it) }
+            repository.getApplicationsByCompanies(accountId, rawCompaniesToFetch)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
@@ -71,5 +97,19 @@ class MainViewModel @Inject constructor(
             repository.clearAccountData(accountId)
             metaRepository.clearMetadata(accountId)
         }
+    }
+
+    fun toggleCompanyFilter(normalizedCompany: String) {
+        val current = selectedCompanies.value.toMutableSet()
+        if (current.contains(normalizedCompany)) {
+            current.remove(normalizedCompany)
+        } else {
+            current.add(normalizedCompany)
+        }
+        selectedCompanies.value = current
+    }
+
+    fun clearCompanyFilters() {
+        selectedCompanies.value = emptySet()
     }
 }

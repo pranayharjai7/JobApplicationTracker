@@ -10,6 +10,10 @@ class JobApplicationRepository @Inject constructor(
 ) {
     fun getAllApplications(accountId: String): Flow<List<JobApplication>> = dao.getAllApplications(accountId)
 
+    fun getDistinctCompanies(accountId: String): Flow<List<String>> = dao.getDistinctCompanies(accountId)
+
+    fun getApplicationsByCompanies(accountId: String, companies: List<String>): Flow<List<JobApplication>> = dao.getApplicationsByCompanies(accountId, companies)
+
     fun getApplicationById(id: Int, accountId: String): Flow<JobApplication?> = dao.getApplicationById(id, accountId)
 
     suspend fun getExistingEmailIds(emailIds: List<String>, accountId: String): List<String> = dao.getExistingEmailIds(emailIds, accountId)

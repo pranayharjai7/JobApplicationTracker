@@ -11,6 +11,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +55,11 @@ fun DashboardScreen(
 
     var showAccountSwitcher by remember { mutableStateOf(false) }
     var showNoAccountDialog by remember { mutableStateOf(false) }
+    var showCompanyFilter by remember { mutableStateOf(false) }
+
+    val selectedCompanies by viewModel.selectedCompanies.collectAsState()
+    val companyGroups by viewModel.companyGroups.collectAsState()
+
     val scope = rememberCoroutineScope()
 
     val gso = remember {
@@ -130,7 +139,49 @@ fun DashboardScreen(
             } else {
                 StatsSection(applications)
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
+                
+                // Company Filter Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
+                    if (selectedCompanies.isNotEmpty()) {
+                        TextButton(onClick = { viewModel.clearCompanyFilters() }) {
+                            Text("Clear all")
+                        }
+                    }
+                }
+                
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    items(selectedCompanies.toList()) { company ->
+                        InputChip(
+                            selected = true,
+                            onClick = { viewModel.toggleCompanyFilter(company) },
+                            label = { Text(company) },
+                            trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Remove") },
+                            colors = InputChipDefaults.inputChipColors(
+                                selectedContainerColor = Color(0xFF5C6BC0).copy(alpha = 0.2f),
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                    if (companyGroups.isNotEmpty()) {
+                        item {
+                            InputChip(
+                                selected = false,
+                                onClick = { showCompanyFilter = true },
+                                label = { Text("Add company") },
+                                leadingIcon = { Icon(Icons.Default.Add, contentDescription = "Add") }
+                            )
+                        }
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 LazyColumn(
@@ -179,6 +230,15 @@ fun DashboardScreen(
                     googleSignInClient.signOut()
                 }
             }
+        )
+    }
+
+    if (showCompanyFilter) {
+        CompanyFilterSheet(
+            companyGroups = companyGroups,
+            selectedCompanies = selectedCompanies,
+            onDismiss = { showCompanyFilter = false },
+            onToggleCompany = { viewModel.toggleCompanyFilter(it) }
         )
     }
 
@@ -384,3 +444,91 @@ fun EmptyStateView(onAddAccountClick: () -> Unit) {
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CompanyFilterSheet(
+    companyGroups: Map<String, List<String>>,
+    selectedCompanies: Set<String>,
+    onDismiss: () -> Unit,
+    onToggleCompany: (String) -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredCompanies = companyGroups.keys.filter {
+        it.contains(searchQuery, ignoreCase = true)
+    }.sorted()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1E1E1E),
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                "Filter by Company",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search companies...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF5C6BC0),
+                    focusedContainerColor = Color(0xFF2C2C2C),
+                    unfocusedContainerColor = Color(0xFF2C2C2C),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                items(filteredCompanies) { company ->
+                    val isSelected = selectedCompanies.contains(company)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onToggleCompany(company) }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            AsyncImage(
+                                model = "https://logo.clearbit.com/${company.replace(" ", "").lowercase()}.com",
+                                contentDescription = "$company Logo",
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.DarkGray),
+                                contentScale = ContentScale.Crop,
+                                error = coil.compose.rememberAsyncImagePainter(android.R.drawable.sym_def_app_icon) // reliable fallback
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(company, color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                        }
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = null, // Handled by Row click
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color(0xFF5C6BC0)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
