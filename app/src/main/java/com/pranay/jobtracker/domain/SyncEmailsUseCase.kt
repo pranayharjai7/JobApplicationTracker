@@ -35,12 +35,10 @@ class SyncEmailsUseCase @Inject constructor(
 ) {
 
     suspend operator fun invoke(accountId: String) {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
-
         withContext(Dispatchers.IO) {
             val credential = GoogleAccountCredential.usingOAuth2(
                 context, listOf(GmailScopes.GMAIL_READONLY)
-            ).apply { selectedAccount = account.account }
+            ).apply { selectedAccountName = accountId }
 
             val service = Gmail.Builder(
                 AndroidHttp.newCompatibleTransport(),

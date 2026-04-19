@@ -105,17 +105,17 @@ fun AccountSwitcherSheet(
                 )
 
                 ActionItem(
-                    text = stringResource(R.string.remove_account_option),
-                    icon = Icons.Default.Delete,
-                    color = Color(0xFFF44336),
-                    onClick = { showRemoveDialog = true }
-                )
-
-                ActionItem(
                     text = stringResource(R.string.wipe_data_option),
                     icon = Icons.Default.Delete,
                     color = Color(0xFFF44336),
                     onClick = { showWipeDialog = true }
+                )
+
+                ActionItem(
+                    text = stringResource(R.string.remove_account_option),
+                    icon = Icons.Default.Delete,
+                    color = Color(0xFFF44336),
+                    onClick = { showRemoveDialog = true }
                 )
 
                 ActionItem(
@@ -130,31 +130,6 @@ fun AccountSwitcherSheet(
                 )
             }
         }
-    }
-
-    if (showRemoveDialog && activeAccount != null) {
-        AlertDialog(
-            onDismissRequest = { showRemoveDialog = false },
-            title = { Text(stringResource(R.string.remove_account_title)) },
-            text = { Text(stringResource(R.string.remove_account_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showRemoveDialog = false
-                    onRemoveAccount(activeAccount)
-                    onDismiss()
-                }) {
-                    Text(stringResource(R.string.action_remove), color = Color(0xFFF44336))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRemoveDialog = false }) {
-                    Text(stringResource(R.string.action_cancel), color = Color.White)
-                }
-            },
-            containerColor = Color(0xFF1E1E1E),
-            titleContentColor = Color.White,
-            textContentColor = Color(0xFFE0E0E0)
-        )
     }
 
     if (showWipeDialog) {
@@ -173,6 +148,31 @@ fun AccountSwitcherSheet(
             },
             dismissButton = {
                 TextButton(onClick = { showWipeDialog = false }) {
+                    Text(stringResource(R.string.action_cancel), color = Color.White)
+                }
+            },
+            containerColor = Color(0xFF1E1E1E),
+            titleContentColor = Color.White,
+            textContentColor = Color(0xFFE0E0E0)
+        )
+    }
+
+    if (showRemoveDialog && activeAccount != null) {
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = false },
+            title = { Text(stringResource(R.string.remove_account_title)) },
+            text = { Text(stringResource(R.string.remove_account_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRemoveDialog = false
+                    onRemoveAccount(activeAccount)
+                    onDismiss()
+                }) {
+                    Text(stringResource(R.string.action_remove), color = Color(0xFFF44336))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = false }) {
                     Text(stringResource(R.string.action_cancel), color = Color.White)
                 }
             },

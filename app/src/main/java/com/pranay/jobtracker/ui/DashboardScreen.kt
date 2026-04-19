@@ -143,7 +143,11 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(24.dp))
             if (accounts.isEmpty()) {
                 EmptyStateView(
-                    onAddAccountClick = { signInLauncher.launch(googleSignInClient.signInIntent) }
+                    onAddAccountClick = { 
+                        googleSignInClient.signOut().addOnCompleteListener {
+                            signInLauncher.launch(googleSignInClient.signInIntent)
+                        }
+                    }
                 )
             } else {
                 StatsSection(applications)
@@ -275,7 +279,9 @@ fun DashboardScreen(
                 }
             },
             onAddAccount = {
-                signInLauncher.launch(googleSignInClient.signInIntent)
+                googleSignInClient.signOut().addOnCompleteListener {
+                    signInLauncher.launch(googleSignInClient.signInIntent)
+                }
             },
             onSignOut = { account ->
                 scope.launch {
@@ -308,7 +314,9 @@ fun DashboardScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showNoAccountDialog = false
-                    signInLauncher.launch(googleSignInClient.signInIntent)
+                    googleSignInClient.signOut().addOnCompleteListener {
+                        signInLauncher.launch(googleSignInClient.signInIntent)
+                    }
                 }) {
                     Text("Add Google Account")
                 }

@@ -5,14 +5,14 @@ import com.pranay.jobtracker.data.JobApplicationRepository
 import kotlinx.coroutines.delay
 
 interface GmailSyncManager {
-    suspend fun syncRecentJobEmails()
+    suspend fun syncRecentJobEmails(accountId: String)
 }
 
 class MockGmailSyncManagerImpl(
     private val repository: JobApplicationRepository,
     private val emailParser: EmailParser
 ) : GmailSyncManager {
-    override suspend fun syncRecentJobEmails() {
+    override suspend fun syncRecentJobEmails(accountId: String) {
         delay(1500)
 
         val mockEmails = listOf(
@@ -42,7 +42,8 @@ class MockGmailSyncManagerImpl(
                     lastUpdate     = info.dateStr,
                     recruiterEmail = info.recruiterEmail,
                     notes          = null,
-                    emailId        = info.sourceEmailId
+                    emailId        = info.sourceEmailId,
+                    accountId      = accountId
                 )
             }
             repository.insertApplications(applications)

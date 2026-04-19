@@ -19,16 +19,13 @@ class RealGmailSyncManagerImpl(
     private val emailParser: EmailParser
 ) : GmailSyncManager {
 
-    override suspend fun syncRecentJobEmails() {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
-        val accountId = account.email ?: "legacy_account"
-        
+    override suspend fun syncRecentJobEmails(accountId: String) {
         withContext(Dispatchers.IO) {
             try {
                 val credential = GoogleAccountCredential.usingOAuth2(
                     context, listOf(GmailScopes.GMAIL_READONLY)
                 ).apply {
-                    selectedAccount = account.account
+                    selectedAccountName = accountId
                 }
 
                 val service = Gmail.Builder(
