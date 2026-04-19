@@ -99,6 +99,7 @@ dependencies {
 
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-gif:2.5.0")
 
     // Google Auth & API Client
     implementation("com.google.android.gms:play-services-auth:21.0.0")

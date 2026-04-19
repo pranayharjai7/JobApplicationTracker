@@ -6,15 +6,31 @@ import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import coil.ImageLoader
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import kotlinx.coroutines.delay
 import com.pranay.jobtracker.ui.ApplicationDetailScreen
 import com.pranay.jobtracker.ui.DashboardScreen
 import com.pranay.jobtracker.ui.theme.JobApplicationTrackerTheme
@@ -26,38 +42,79 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         
-        // Custom exit animation for the splash screen
-        splashScreen.setOnExitAnimationListener { splashProvider ->
-            val fadeOut = android.view.animation.AlphaAnimation(1f, 0f).apply {
-                duration = 600
-                fillAfter = true
-            }
-            splashProvider.view.startAnimation(fadeOut)
-            splashProvider.remove()
-        }
+        var showSplash by mutableStateOf(true)
+        
+        // Keep the system splash on screen slightly longer to hide the Compose bootstrap
+        splashScreen.setKeepOnScreenCondition { false } 
         
         setContent {
             JobApplicationTrackerTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination = "dashboard") {
-                        composable("dashboard") {
-                            DashboardScreen(
-                                onApplicationClick = { id ->
-                                    navController.navigate("detail/$id")
-                                }
-                            )
+                val alpha = remember { Animatable(1f) }
+                
+                LaunchedEffect(Unit) {
+                    delay(2020) // Stay for exactly 2.02s
+                    alpha.animateTo(0f, animationSpec = tween(600))
+                    showSplash = false
+                }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Main App Content
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        val navController = rememberNavController()
+                        NavHost(navController = navController, startDestination = "dashboard") {
+                            composable("dashboard") {
+                                DashboardScreen(
+                                    onApplicationClick = { id ->
+                                        navController.navigate("detail/$id")
+                                    }
+                                )
+                            }
+                            composable(
+                                "detail/{id}",
+                                arguments = listOf(navArgument("id") { type = NavType.IntType })
+                            ) {
+                                ApplicationDetailScreen(
+                                    onBackClick = { navController.popBackStack() }
+                                )
+                            }
                         }
-                        composable(
-                            "detail/{id}",
-                            arguments = listOf(navArgument("id") { type = NavType.IntType })
+                    }
+
+                    // Animated GIF Overlay
+                    if (showSplash) {
+                        val imageLoader = ImageLoader.Builder(this@MainActivity)
+                            .components {
+                                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                                    add(ImageDecoderDecoder.Factory())
+                                } else {
+                                    add(GifDecoder.Factory())
+                                }
+                            }
+                            .build()
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer(alpha = alpha.value),
+                            color = Color(0xFFFDFDFA)
                         ) {
-                            ApplicationDetailScreen(
-                                onBackClick = { navController.popBackStack() }
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                androidx.compose.foundation.Image(
+                                    painter = rememberAsyncImagePainter(
+                                        model = R.raw.jobtrack_splash,
+                                        imageLoader = imageLoader
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(300.dp),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                            }
                         }
                     }
                 }
