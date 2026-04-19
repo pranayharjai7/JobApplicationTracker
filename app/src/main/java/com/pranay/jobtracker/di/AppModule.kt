@@ -77,8 +77,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideEmailParser(): EmailParser {
-        return RealEmailParserImpl()
+    fun provideEmailParser(
+        aiProviderFactory: com.pranay.jobtracker.domain.ai.AIProviderFactory
+    ): EmailParser {
+        return RealEmailParserImpl(aiProviderFactory)
     }
 
     @Provides
@@ -113,8 +115,9 @@ object AppModule {
     @Singleton
     fun provideGenerateJobSummaryUseCase(
         eventRepository: EmailEventRepository,
-        appRepository: JobApplicationRepository
-    ): GenerateJobSummaryUseCase = GenerateJobSummaryUseCase(eventRepository, appRepository)
+        appRepository: JobApplicationRepository,
+        aiProviderFactory: com.pranay.jobtracker.domain.ai.AIProviderFactory
+    ): GenerateJobSummaryUseCase = GenerateJobSummaryUseCase(eventRepository, appRepository, aiProviderFactory)
 
     @Provides
     @Singleton

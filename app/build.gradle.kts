@@ -13,6 +13,8 @@ if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
 val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY", "")
+val groqApiKey = localProperties.getProperty("GROQ_API_KEY", "")
+val openRouterApiKey = localProperties.getProperty("OPENROUTER_API_KEY", "")
 
 android {
     namespace = "com.pranay.jobtracker"
@@ -30,6 +32,8 @@ android {
             useSupportLibrary = true
         }
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
+        buildConfigField("String", "OPENROUTER_API_KEY", "\"$openRouterApiKey\"")
     }
 
     buildTypes {

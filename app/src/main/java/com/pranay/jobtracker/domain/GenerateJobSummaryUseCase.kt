@@ -1,7 +1,6 @@
 package com.pranay.jobtracker.domain
 
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
+import com.pranay.jobtracker.domain.ai.AIProviderFactory
 import com.pranay.jobtracker.BuildConfig
 import com.pranay.jobtracker.data.EmailEventRepository
 import com.pranay.jobtracker.data.JobApplicationRepository
@@ -11,12 +10,9 @@ import javax.inject.Singleton
 @Singleton
 class GenerateJobSummaryUseCase @Inject constructor(
     private val eventRepository: EmailEventRepository,
-    private val appRepository: JobApplicationRepository
+    private val appRepository: JobApplicationRepository,
+    private val aiProviderFactory: AIProviderFactory
 ) {
-    private val model = GenerativeModel(
-        modelName = "gemini-flash-latest",
-        apiKey = BuildConfig.GEMINI_API_KEY
-    )
 
     suspend operator fun invoke(
         jobApplicationId: Int,
@@ -50,7 +46,8 @@ class GenerateJobSummaryUseCase @Inject constructor(
         """.trimIndent()
 
         val summary = runCatching {
-            model.generateContent(content { text(prompt) }).text?.trim()
+            val provider = aiProviderFactory.getProvider()
+            provider.generateContent(prompt).trim()
         }.getOrNull() ?: return
 
         appRepository.updateApplicationStatus(

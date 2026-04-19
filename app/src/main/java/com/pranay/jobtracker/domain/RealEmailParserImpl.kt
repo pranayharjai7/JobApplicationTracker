@@ -1,19 +1,15 @@
 package com.pranay.jobtracker.domain
 
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
+import com.pranay.jobtracker.domain.ai.AIProviderFactory
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.pranay.jobtracker.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class RealEmailParserImpl : EmailParser {
-
-    private val generativeModel = GenerativeModel(
-        modelName = "gemini-flash-latest",
-        apiKey = BuildConfig.GEMINI_API_KEY
-    )
+class RealEmailParserImpl(
+    private val aiProviderFactory: AIProviderFactory
+) : EmailParser {
 
     private val gson = GsonBuilder().setLenient().create()
 
@@ -65,13 +61,8 @@ class RealEmailParserImpl : EmailParser {
         """.trimIndent()
 
         return try {
-            val response = generativeModel.generateContent(
-                content {
-                    text(prompt)
-                }
-            )
-
-            val text = response.text ?: return emptyList()
+            val provider = aiProviderFactory.getProvider()
+            val text = provider.generateContent(prompt)
             val startIndex = text.indexOf("[")
             val endIndex = text.lastIndexOf("]")
             if (startIndex == -1 || endIndex == -1 || startIndex > endIndex) return emptyList()
@@ -98,9 +89,6 @@ class RealEmailParserImpl : EmailParser {
                     snippet        = emailData.body
                 )
             }
-        } catch (e: com.google.ai.client.generativeai.type.QuotaExceededException) {
-            e.printStackTrace()
-            emptyList()
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
