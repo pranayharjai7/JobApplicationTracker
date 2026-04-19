@@ -29,8 +29,12 @@ import com.pranay.jobtracker.data.AccountInfo
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +50,7 @@ fun DashboardScreen(
     val activeAccount = accounts.find { it.accountId == activeAccountId }
 
     var showAccountSwitcher by remember { mutableStateOf(false) }
+    var showNoAccountDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val gso = remember {
@@ -76,11 +81,16 @@ fun DashboardScreen(
     val pullToRefreshState = rememberPullToRefreshState()
     
     val onRefresh = {
-        val account = GoogleSignIn.getLastSignedInAccount(context)
-        if (account != null && GoogleSignIn.hasPermissions(account, Scope(GmailScopes.GMAIL_READONLY))) {
+        if (activeAccountId != null) {
             viewModel.syncEmails()
+        } else if (accounts.isNotEmpty()) {
+            scope.launch {
+                viewModel.accountRepository.setActiveAccount(accounts.first().accountId)
+                viewModel.syncEmails()
+            }
         } else {
-            signInLauncher.launch(googleSignInClient.signInIntent)
+            showNoAccountDialog = true
+            pullToRefreshState.endRefresh()
         }
     }
 
@@ -113,19 +123,25 @@ fun DashboardScreen(
                 isSyncing = isSyncing
             )
             Spacer(modifier = Modifier.height(24.dp))
-            StatsSection(applications)
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(applications) { app ->
-                    val appColorString = activeAccount?.colorHash ?: "#5C6BC0"
-                    val appColor = Color(android.graphics.Color.parseColor(appColorString))
-                    ApplicationCard(app = app, accountColor = appColor, onClick = onApplicationClick)
+            if (accounts.isEmpty()) {
+                EmptyStateView(
+                    onAddAccountClick = { signInLauncher.launch(googleSignInClient.signInIntent) }
+                )
+            } else {
+                StatsSection(applications)
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(applications) { app ->
+                        val appColorString = activeAccount?.colorHash ?: "#5C6BC0"
+                        val appColor = Color(android.graphics.Color.parseColor(appColorString))
+                        ApplicationCard(app = app, accountColor = appColor, onClick = onApplicationClick)
+                    }
                 }
             }
         }
@@ -163,6 +179,30 @@ fun DashboardScreen(
                     googleSignInClient.signOut()
                 }
             }
+        )
+    }
+
+    if (showNoAccountDialog) {
+        AlertDialog(
+            onDismissRequest = { showNoAccountDialog = false },
+            title = { Text("Connect an Email Account") },
+            text = { Text("To track job applications automatically, connect your Gmail account so the app can detect application confirmations and updates.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showNoAccountDialog = false
+                    signInLauncher.launch(googleSignInClient.signInIntent)
+                }) {
+                    Text("Add Google Account")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNoAccountDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = Color(0xFF1E1E1E),
+            titleContentColor = Color.White,
+            textContentColor = Color(0xFFE0E0E0)
         )
     }
 }
@@ -218,8 +258,11 @@ fun HeaderSection(
                         .size(36.dp)
                         .clip(CircleShape)
                         .background(Color.DarkGray)
-                        .clickable(onClick = onProfileClick)
-                )
+                        .clickable(onClick = onProfileClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Inbox, contentDescription = "Add Account", tint = Color.LightGray, modifier = Modifier.size(20.dp))
+                }
             }
         }
     }
@@ -300,5 +343,44 @@ fun Badge(status: String) {
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(status, color = textColor, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+fun EmptyStateView(onAddAccountClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Email,
+            contentDescription = "No Account",
+            modifier = Modifier.size(72.dp),
+            tint = Color(0xFF5C6BC0)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No email account connected",
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Connect your Gmail account to automatically track job applications from your inbox.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFFA0A0A0),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onAddAccountClick,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
+        ) {
+            Text("Add Account")
+        }
     }
 }
