@@ -9,13 +9,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,7 +25,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.gmail.GmailScopes
 import com.pranay.jobtracker.data.JobApplication
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onApplicationClick: (Int) -> Unit,
@@ -49,40 +51,70 @@ fun DashboardScreen(
         viewModel.syncEmails()
     }
 
-    Column(
+    val pullToRefreshState = rememberPullToRefreshState()
+    
+    val onRefresh = {
+        val account = GoogleSignIn.getLastSignedInAccount(context)
+        if (account != null && GoogleSignIn.hasPermissions(account, Scope(GmailScopes.GMAIL_READONLY))) {
+            viewModel.syncEmails()
+        } else {
+            signInLauncher.launch(googleSignInClient.signInIntent)
+        }
+    }
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            onRefresh()
+        }
+    }
+
+    LaunchedEffect(isSyncing) {
+        if (isSyncing) pullToRefreshState.startRefresh()
+        else pullToRefreshState.endRefresh()
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
-        HeaderSection(
-            onSyncClick = {
-                val account = GoogleSignIn.getLastSignedInAccount(context)
-                if (account != null && GoogleSignIn.hasPermissions(account, Scope(GmailScopes.GMAIL_READONLY))) {
-                    viewModel.syncEmails()
-                } else {
-                    signInLauncher.launch(googleSignInClient.signInIntent)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            HeaderSection(
+                onDeleteClick = { viewModel.clearDatabase() },
+                onStopClick = { viewModel.stopSyncing() },
+                isSyncing = isSyncing
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            StatsSection(applications)
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(applications) { app ->
+                    ApplicationCard(app, onClick = onApplicationClick)
                 }
-            },
-            onDeleteClick = { viewModel.clearDatabase() },
-            onStopClick = { viewModel.stopSyncing() },
-            isSyncing = isSyncing
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        StatsSection(applications)
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(applications) { app ->
-                ApplicationCard(app, onClick = onApplicationClick)
             }
         }
+
+        PullToRefreshContainer(
+            modifier = Modifier.align(Alignment.TopCenter),
+            state = pullToRefreshState,
+            containerColor = Color(0xFF1E1E1E),
+            contentColor = Color(0xFF5C6BC0)
+        )
     }
 }
 
 @Composable
-fun HeaderSection(onSyncClick: () -> Unit, onDeleteClick: () -> Unit, onStopClick: () -> Unit, isSyncing: Boolean) {
+fun HeaderSection(onDeleteClick: () -> Unit, onStopClick: () -> Unit, isSyncing: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -102,13 +134,6 @@ fun HeaderSection(onSyncClick: () -> Unit, onDeleteClick: () -> Unit, onStopClic
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500))
                 ) {
                     Text("Stop Sync")
-                }
-            } else {
-                Button(
-                    onClick = onSyncClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
-                ) {
-                    Text("Sync")
                 }
             }
         }
