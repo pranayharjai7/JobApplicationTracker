@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JobTrack</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="remove_account_title">Remove Account</string>
+    <string name="remove_account_message">Are you sure you want to completely remove this account and delete its associated data? You will be signed out.</string>
+    <string name="wipe_data_title">Wipe Local Data</string>
+    <string name="wipe_data_message">Are you sure you want to completely wipe all cached local application data for this app?</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_wipe">Wipe</string>
+    <string name="add_account">Add another account</string>
+    <string name="sign_out">Sign out</string>
+    <string name="remove_account_option">Remove account &amp; delete data</string>
+    <string name="wipe_data_option">Wipe all local data</string>
+    <string name="recent_applications">Recent Applications</string>
+    <string name="list_view">List View</string>
+    <string name="journey_view">Journey View</string>
+    <string name="smart_filters">Smart Filters</string>
+    <string name="smart_suggestions">Smart Suggestions</string>
+    <string name="no_account_title">No Account</string>
+    <string name="no_account_connected">No email account connected</string>
+    <string name="connect_gmail_desc">Connect your Gmail account to automatically track job applications from your inbox.</string>
+    <string name="add_account_button">Add Account</string>
+    <string name="activity_title">Activity</string>
+    <string name="activity_last_7_days">Activity (Last 7 Days)</string>
+    <string name="activity_last_30_days">Activity (Last 30 Days)</string>
+    <string name="activity_last_3_months">Activity (Last 3 Months)</string>
+    <string name="activity_last_6_months">Activity (Last 6 Months)</string>
+    <string name="activity_last_year">Activity (Last Year)</string>
+    <string name="stat_total">Total</string>
+    <string name="stat_interviews">Interviews</string>
+    <string name="details_title">Details</string>
+    <string name="back_button">Back</string>
+    <string name="applied_on">Applied: %s</string>
+    <string name="recruiter_label">Recruiter:</string>
+    <string name="ai_summary_title">AI Application Summary</string>
+    <string name="no_summary_available">No summary available.</string>
+    <string name="email_timeline_title">Email Timeline</string>
+    <string name="action_stop">Stop</string>
+    <string name="syncing_status">Syncing... Tap to stop</string>
+</resources>

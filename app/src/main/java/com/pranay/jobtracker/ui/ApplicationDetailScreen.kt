@@ -11,6 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
+import com.pranay.jobtracker.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,10 +39,10 @@ fun ApplicationDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(application?.companyName ?: "Details") },
+                title = { Text(application?.companyName ?: stringResource(R.string.details_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back_button))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -75,27 +77,27 @@ fun ApplicationDetailScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     val stageEnum = runCatching { ApplicationStage.valueOf(app.stage) }.getOrDefault(ApplicationStage.APPLIED)
                     Badge(stage = stageEnum)
-                    Text("Applied: ${app.dateApplied}", color = Color.Gray)
+                    Text(stringResource(R.string.applied_on, app.dateApplied), color = Color.Gray)
                 }
 
                 HorizontalDivider(color = Color(0xFF333333))
 
                 if (!app.recruiterEmail.isNullOrBlank()) {
-                    Text("Recruiter:", fontWeight = FontWeight.Bold, color = Color.LightGray)
+                    Text(stringResource(R.string.recruiter_label), fontWeight = FontWeight.Bold, color = Color.LightGray)
                     Text(app.recruiterEmail, color = Color(0xFF5C6BC0))
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                Text("AI Application Summary", fontWeight = FontWeight.Bold, color = Color.LightGray)
+                Text(stringResource(R.string.ai_summary_title), fontWeight = FontWeight.Bold, color = Color.LightGray)
                 Text(
-                    text = app.summary ?: app.notes ?: "No summary available.",
+                    text = app.summary ?: app.notes ?: stringResource(R.string.no_summary_available),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFFE0E0E0)
                 )
 
                 if (events.isNotEmpty()) {
                     HorizontalDivider(color = Color(0xFF333333))
-                    Text("Email Timeline", fontWeight = FontWeight.Bold, color = Color.LightGray)
+                    Text(stringResource(R.string.email_timeline_title), fontWeight = FontWeight.Bold, color = Color.LightGray)
                     Spacer(modifier = Modifier.height(4.dp))
                     events.forEach { event ->
                         EmailEventItem(event, accountColor)

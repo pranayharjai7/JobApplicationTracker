@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.pranay.jobtracker.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -154,7 +156,7 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
+                    Text(text = stringResource(R.string.recent_applications), style = MaterialTheme.typography.titleLarge)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             color = Color(0xFF2C2C2C),
@@ -166,18 +168,18 @@ fun DashboardScreen(
                                     onClick = { viewModel.isJourneyModeEnabled.value = false },
                                     modifier = Modifier.background(if (!isJourneyModeEnabled) Color(0xFF5C6BC0) else Color.Transparent, RoundedCornerShape(8.dp)).size(32.dp)
                                 ) {
-                                    Icon(Icons.Default.List, contentDescription = "List View", tint = Color.White, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.List, contentDescription = stringResource(R.string.list_view), tint = Color.White, modifier = Modifier.size(18.dp))
                                 }
                                 IconButton(
                                     onClick = { viewModel.isJourneyModeEnabled.value = true },
                                     modifier = Modifier.background(if (isJourneyModeEnabled) Color(0xFF5C6BC0) else Color.Transparent, RoundedCornerShape(8.dp)).size(32.dp)
                                 ) {
-                                    Icon(Icons.Default.Timeline, contentDescription = "Journey View", tint = Color.White, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Timeline, contentDescription = stringResource(R.string.journey_view), tint = Color.White, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
                         IconButton(onClick = { showSmartFilterSheet = true }) {
-                            Icon(Icons.Default.Star, "Smart Filters", tint = Color(0xFF5C6BC0))
+                            Icon(Icons.Default.Star, stringResource(R.string.smart_filters), tint = Color(0xFF5C6BC0))
                         }
                     }
                 }
@@ -245,7 +247,7 @@ fun DashboardScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Syncing... Tap to stop",
+                        text = stringResource(R.string.syncing_status),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
@@ -253,7 +255,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Stop",
+                        contentDescription = stringResource(R.string.action_stop),
                         modifier = Modifier.size(16.dp),
                         tint = Color.White.copy(alpha = 0.8f)
                     )
@@ -333,7 +335,7 @@ fun HeaderSection(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("JobTracker", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -359,7 +361,7 @@ fun HeaderSection(
                         .clickable(onClick = onProfileClick),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Inbox, contentDescription = "Add Account", tint = Color.LightGray, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Inbox, contentDescription = stringResource(R.string.add_account_button), tint = Color.LightGray, modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -369,8 +371,8 @@ fun HeaderSection(
 @Composable
 fun StatsSection(apps: List<JobApplication>) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        StatCard(title = "Total", count = apps.size.toString(), modifier = Modifier.weight(1f))
-        StatCard(title = "Interviews", count = apps.count { it.stage == ApplicationStage.INTERVIEW.name }.toString(), modifier = Modifier.weight(1f))
+        StatCard(title = stringResource(R.string.stat_total), count = apps.size.toString(), modifier = Modifier.weight(1f))
+        StatCard(title = stringResource(R.string.stat_interviews), count = apps.count { it.stage == ApplicationStage.INTERVIEW.name }.toString(), modifier = Modifier.weight(1f))
     }
 }
 
@@ -452,20 +454,20 @@ fun EmptyStateView(onAddAccountClick: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Default.Email,
-            contentDescription = "No Account",
+            contentDescription = stringResource(R.string.no_account_title),
             modifier = Modifier.size(72.dp),
             tint = Color(0xFF5C6BC0)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No email account connected",
+            text = stringResource(R.string.no_account_connected),
             style = MaterialTheme.typography.titleLarge,
             color = Color.White,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Connect your Gmail account to automatically track job applications from your inbox.",
+            text = stringResource(R.string.connect_gmail_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFFA0A0A0),
             textAlign = TextAlign.Center
@@ -475,7 +477,7 @@ fun EmptyStateView(onAddAccountClick: () -> Unit) {
             onClick = onAddAccountClick,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
         ) {
-            Text("Add Account")
+            Text(stringResource(R.string.add_account_button))
         }
     }
 }
@@ -499,12 +501,12 @@ fun JobActivityHeatmap(densityMap: Map<LocalDate, Int>, trailingDays: Int?) {
     val days = (0..activeDays).map { startDate.plusDays(it.toLong()) }
     
     val title = when (activeDays) {
-        7 -> "Activity (Last 7 Days)"
-        30 -> "Activity (Last 30 Days)"
-        90 -> "Activity (Last 3 Months)"
-        180 -> "Activity (Last 6 Months)"
-        365 -> "Activity (Last Year)"
-        else -> "Activity"
+        7 -> stringResource(R.string.activity_last_7_days)
+        30 -> stringResource(R.string.activity_last_30_days)
+        90 -> stringResource(R.string.activity_last_3_months)
+        180 -> stringResource(R.string.activity_last_6_months)
+        365 -> stringResource(R.string.activity_last_year)
+        else -> stringResource(R.string.activity_title)
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -574,7 +576,7 @@ fun SmartFilterSheet(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
                     Icon(Icons.Default.Star, contentDescription = "AI", tint = Color(0xFF5C6BC0))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Smart Suggestions", style = MaterialTheme.typography.titleLarge, color = Color.White)
+                    Text(stringResource(R.string.smart_suggestions), style = MaterialTheme.typography.titleLarge, color = Color.White)
                 }
                 
                 if (isFetchingAi) {

@@ -10,8 +10,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.pranay.jobtracker.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,7 +81,7 @@ fun AccountSwitcherSheet(
 
             // Actions
             ActionItem(
-                text = "Add another account",
+                text = stringResource(R.string.add_account),
                 icon = Icons.Default.Add,
                 onClick = {
                     onAddAccount()
@@ -88,7 +91,7 @@ fun AccountSwitcherSheet(
 
             if (activeAccount != null) {
                 ActionItem(
-                    text = "Sign out",
+                    text = stringResource(R.string.sign_out),
                     icon = Icons.Default.Logout,
                     onClick = {
                         onSignOut(activeAccount)
@@ -97,17 +100,27 @@ fun AccountSwitcherSheet(
                 )
 
                 ActionItem(
-                    text = "Remove account & delete data",
+                    text = stringResource(R.string.remove_account_option),
                     icon = Icons.Default.Delete,
                     color = Color(0xFFF44336),
                     onClick = { showRemoveDialog = true }
                 )
 
                 ActionItem(
-                    text = "Wipe all local data",
+                    text = stringResource(R.string.wipe_data_option),
                     icon = Icons.Default.Delete,
                     color = Color(0xFFF44336),
                     onClick = { showWipeDialog = true }
+                )
+
+                ActionItem(
+                    text = stringResource(R.string.privacy_policy_title),
+                    icon = Icons.Default.PrivacyTip,
+                    color = Color.Gray,
+                    onClick = {
+                        // For now we just show a toast or could open the link
+                        // In production this will open the URL provided in the Data Safety form
+                    }
                 )
             }
         }
@@ -116,20 +129,20 @@ fun AccountSwitcherSheet(
     if (showRemoveDialog && activeAccount != null) {
         AlertDialog(
             onDismissRequest = { showRemoveDialog = false },
-            title = { Text("Remove Account") },
-            text = { Text("Are you sure you want to completely remove this account and delete its associated data? You will be signed out.") },
+            title = { Text(stringResource(R.string.remove_account_title)) },
+            text = { Text(stringResource(R.string.remove_account_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showRemoveDialog = false
                     onRemoveAccount(activeAccount)
                     onDismiss()
                 }) {
-                    Text("Remove", color = Color(0xFFF44336))
+                    Text(stringResource(R.string.action_remove), color = Color(0xFFF44336))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRemoveDialog = false }) {
-                    Text("Cancel", color = Color.White)
+                    Text(stringResource(R.string.action_cancel), color = Color.White)
                 }
             },
             containerColor = Color(0xFF1E1E1E),
@@ -141,20 +154,20 @@ fun AccountSwitcherSheet(
     if (showWipeDialog) {
         AlertDialog(
             onDismissRequest = { showWipeDialog = false },
-            title = { Text("Wipe Local Data") },
-            text = { Text("Are you sure you want to completely wipe all cached local application data for this app?") },
+            title = { Text(stringResource(R.string.wipe_data_title)) },
+            text = { Text(stringResource(R.string.wipe_data_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showWipeDialog = false
                     onWipeData()
                     onDismiss()
                 }) {
-                    Text("Wipe", color = Color(0xFFF44336))
+                    Text(stringResource(R.string.action_wipe), color = Color(0xFFF44336))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showWipeDialog = false }) {
-                    Text("Cancel", color = Color.White)
+                    Text(stringResource(R.string.action_cancel), color = Color.White)
                 }
             },
             containerColor = Color(0xFF1E1E1E),
