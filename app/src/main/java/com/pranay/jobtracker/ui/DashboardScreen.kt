@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.filled.Add
@@ -139,9 +140,7 @@ fun DashboardScreen(
         ) {
             HeaderSection(
                 activeAccount = activeAccount,
-                onProfileClick = { showAccountSwitcher = true },
-                onStopClick = { viewModel.stopSyncing() },
-                isSyncing = isSyncing
+                onProfileClick = { showAccountSwitcher = true }
             )
             Spacer(modifier = Modifier.height(24.dp))
             if (accounts.isEmpty()) {
@@ -221,6 +220,50 @@ fun DashboardScreen(
             containerColor = Color(0xFF1E1E1E),
             contentColor = Color(0xFF5C6BC0)
         )
+
+        // Floating Stop Sync Pill
+        androidx.compose.animation.AnimatedVisibility(
+            visible = isSyncing,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically(),
+            modifier = Modifier.align(Alignment.TopCenter)
+        ) {
+            Surface(
+                onClick = { viewModel.stopSyncing() },
+                shape = RoundedCornerShape(24.dp),
+                color = Color(0xFF5C6BC0), // Using primary indigo to signal it's a main action
+                tonalElevation = 12.dp,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .wrapContentWidth(),
+                shadowElevation = 8.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Syncing... Tap to stop",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Stop",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White.copy(alpha = 0.8f)
+                    )
+                }
+            }
+        }
     }
 
     if (showAccountSwitcher) {
@@ -287,9 +330,7 @@ fun DashboardScreen(
 @Composable
 fun HeaderSection(
     activeAccount: AccountInfo?,
-    onProfileClick: () -> Unit,
-    onStopClick: () -> Unit,
-    isSyncing: Boolean
+    onProfileClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -301,15 +342,6 @@ fun HeaderSection(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isSyncing) {
-                Button(
-                    onClick = onStopClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500))
-                ) {
-                    Text("Stop Sync")
-                }
-            }
-
             // Profile Avatar Button
             if (activeAccount != null) {
                 AsyncImage(
