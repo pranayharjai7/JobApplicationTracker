@@ -84,7 +84,7 @@ class RealEmailParserImpl(
                     jobTitle       = dto.jobTitle ?: "Unknown Role",
                     status         = dto.status ?: "Unknown",
                     dateStr        = dateStr,
-                    dateEpochMs    = parseRfc2822ToEpoch(dateStr),
+                    dateEpochMs    = parseRfc2822ToEpoch(emailData.date), // Always use raw email date for exact Epoch precision
                     recruiterEmail = dto.recruiterEmail,
                     snippet        = emailData.body
                 )
@@ -96,13 +96,13 @@ class RealEmailParserImpl(
     }
 
     private fun parseRfc2822ToEpoch(dateStr: String): Long {
-        if (dateStr.isBlank()) return 0L
+        if (dateStr.isBlank()) return System.currentTimeMillis() // Prevent 0L corruption
         for (pattern in dateFormats) {
             runCatching {
                 SimpleDateFormat(pattern, Locale.ENGLISH).parse(dateStr.trim())?.time
             }.getOrNull()?.let { return it }
         }
-        return 0L
+        return System.currentTimeMillis() // Enforce fallback
     }
 
     private data class JobApplicationDto(

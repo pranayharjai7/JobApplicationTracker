@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +60,8 @@ fun DashboardScreen(
 
     val selectedCompanies by viewModel.selectedCompanies.collectAsState()
     val companyGroups by viewModel.companyGroups.collectAsState()
+    val timeFilter by viewModel.timeFilter.collectAsState()
+    val heatmapData by viewModel.heatmapData.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -138,8 +141,28 @@ fun DashboardScreen(
                 )
             } else {
                 StatsSection(applications)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                JobActivityHeatmap(heatmapData, timeFilter.days)
+                Spacer(modifier = Modifier.height(16.dp))
                 
+                // Timeline Filter Section
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    items(TimeFilter.values()) { filter ->
+                        FilterChip(
+                            selected = timeFilter == filter,
+                            onClick = { viewModel.setTimeFilter(filter) },
+                            label = { Text(filter.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFF5C6BC0).copy(alpha = 0.2f),
+                                selectedLabelColor = Color(0xFF5C6BC0)
+                            )
+                        )
+                    }
+                }
+
                 // Company Filter Section
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -441,6 +464,51 @@ fun EmptyStateView(onAddAccountClick: () -> Unit) {
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
         ) {
             Text("Add Account")
+        }
+    }
+}
+
+@Composable
+fun JobActivityHeatmap(densityMap: Map<LocalDate, Int>, trailingDays: Int?) {
+    val activeDays = trailingDays ?: 365
+    val maxDensity = densityMap.values.maxOrNull()?.coerceAtLeast(1) ?: 1
+    val today = LocalDate.now()
+    val startDate = today.minusDays(activeDays.toLong())
+    val days = (0..activeDays).map { startDate.plusDays(it.toLong()) }
+    
+    val title = when (activeDays) {
+        7 -> "Activity (Last 7 Days)"
+        30 -> "Activity (Last 30 Days)"
+        90 -> "Activity (Last 3 Months)"
+        180 -> "Activity (Last 6 Months)"
+        365 -> "Activity (Last Year)"
+        else -> "Activity"
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.titleSmall, color = Color(0xFFA0A0A0))
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            reverseLayout = true
+        ) {
+            val weeks = days.chunked(7).reversed()
+            items(weeks) { weekDays ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    weekDays.forEach { day ->
+                        val count = densityMap[day] ?: 0
+                        val alpha = if (count == 0) 0.1f else (count.toFloat() / maxDensity).coerceIn(0.3f, 1f)
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color(0xFF5C6BC0).copy(alpha = alpha))
+                        )
+                    }
+                }
+            }
         }
     }
 }

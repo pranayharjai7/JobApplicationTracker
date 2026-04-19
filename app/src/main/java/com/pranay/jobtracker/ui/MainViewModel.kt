@@ -19,7 +19,26 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
+
+enum class TimeFilter(val label: String, val days: Int?) {
+    ALL("All", null),
+    ONE_WEEK("1W", 7),
+    ONE_MONTH("1M", 30),
+    THREE_MONTHS("3M", 90),
+    SIX_MONTHS("6M", 180),
+    ONE_YEAR("1Y", 365)
+}
+
+private data class FilterState(
+    val accountId: String,
+    val selected: Set<String>,
+    val groups: Map<String, List<String>>,
+    val tFilter: TimeFilter
+)
 
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,21 +67,49 @@ class MainViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val selectedCompanies = MutableStateFlow<Set<String>>(emptySet())
+    val timeFilter = MutableStateFlow(TimeFilter.ALL)
 
     val applications: StateFlow<List<JobApplication>> = combine(
         activeAccountFlow.filterNotNull(),
         selectedCompanies,
-        companyGroups
-    ) { accountId, selected, groups ->
-        Triple(accountId, selected, groups)
-    }.flatMapLatest { (accountId, selected, groups) ->
-        if (selected.isEmpty()) {
-            repository.getAllApplications(accountId)
+        companyGroups,
+        timeFilter
+    ) { accountId, selected, groups, tFilter ->
+        FilterState(accountId, selected, groups, tFilter)
+    }.flatMapLatest { state ->
+        val rawFlow = if (state.selected.isEmpty()) {
+            repository.getAllApplications(state.accountId)
         } else {
-            val rawCompaniesToFetch = selected.flatMap { groups[it] ?: listOf(it) }
-            repository.getApplicationsByCompanies(accountId, rawCompaniesToFetch)
+            val rawCompaniesToFetch = state.selected.flatMap { state.groups[it] ?: listOf(it) }
+            repository.getApplicationsByCompanies(state.accountId, rawCompaniesToFetch)
+        }
+        
+        rawFlow.map { list ->
+            if (state.tFilter.days == null) return@map list
+            val cutoff = Instant.now().minusSeconds(state.tFilter.days * 86400L).toEpochMilli()
+            list.filter {
+                val time = if (it.createdAt > 0L) it.createdAt else parseLegacyDate(it.dateApplied)
+                time >= cutoff 
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val heatmapData: StateFlow<Map<LocalDate, Int>> = combine(
+        activeAccountFlow.filterNotNull(),
+        timeFilter
+    ) { accountId, tFilter ->
+        Pair(accountId, tFilter)
+    }.flatMapLatest { (accountId, tFilter) ->
+        repository.getAllApplications(accountId).map { list ->
+            val daysToKeep = tFilter.days ?: 365
+            val cutoff = LocalDate.now().minusDays(daysToKeep.toLong())
+            list.mapNotNull {
+                val time = if (it.createdAt > 0L) it.createdAt else parseLegacyDate(it.dateApplied)
+                val date = Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate()
+                if (date.isBefore(cutoff)) null else date
+            }.groupingBy { it }.eachCount()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
@@ -111,5 +158,22 @@ class MainViewModel @Inject constructor(
 
     fun clearCompanyFilters() {
         selectedCompanies.value = emptySet()
+    }
+
+    fun setTimeFilter(filter: TimeFilter) {
+        timeFilter.value = filter
+    }
+
+    private fun parseLegacyDate(dateStr: String): Long {
+        if (dateStr.isBlank() || dateStr == "Recent") return System.currentTimeMillis()
+        val currentYear = LocalDate.now().year
+        return runCatching {
+            val cleanStr = dateStr.replace(Regex("(?i)st|nd|rd|th"), "")
+            val format = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale.ENGLISH)
+            format.parse("$cleanStr $currentYear")?.time
+        }.getOrNull() ?: runCatching {
+            val format2 = java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.ENGLISH)
+            format2.parse("$dateStr $currentYear")?.time
+        }.getOrNull() ?: System.currentTimeMillis()
     }
 }
