@@ -12,6 +12,9 @@ interface EmailEventDao {
     @Query("SELECT * FROM email_events WHERE jobApplicationId = :jobApplicationId ORDER BY dateEpochMs ASC")
     fun getEventsForApplication(jobApplicationId: Int): Flow<List<EmailEvent>>
 
+    @Query("SELECT * FROM email_events WHERE accountId = :accountId ORDER BY dateEpochMs ASC")
+    fun getAllEventsForAccount(accountId: String): Flow<List<EmailEvent>>
+
     @Query("SELECT * FROM email_events WHERE gmailMessageId = :gmailMessageId LIMIT 1")
     suspend fun getEventByGmailId(gmailMessageId: String): EmailEvent?
 

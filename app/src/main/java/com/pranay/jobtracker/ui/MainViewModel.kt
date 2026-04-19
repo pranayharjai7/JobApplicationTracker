@@ -20,8 +20,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import com.pranay.jobtracker.data.ApplicationStage
-import com.pranay.jobtracker.domain.ai.AIProviderFactory
 import com.pranay.jobtracker.domain.SmartFilterSuggestion
+import com.pranay.jobtracker.domain.ApplicationJourney
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +55,7 @@ class MainViewModel @Inject constructor(
     private val syncEmailsUseCase: com.pranay.jobtracker.domain.SyncEmailsUseCase,
     private val metaRepository: com.pranay.jobtracker.data.SyncMetadataRepository,
     val accountRepository: com.pranay.jobtracker.data.AccountRepository,
+    private val eventRepository: com.pranay.jobtracker.data.EmailEventRepository,
     private val aiProviderFactory: com.pranay.jobtracker.domain.ai.AIProviderFactory
 ) : ViewModel() {
 
@@ -80,6 +81,8 @@ class MainViewModel @Inject constructor(
     
     val aiSmartFilters = MutableStateFlow<List<SmartFilterSuggestion>?>(null)
     val isFetchingAiFilters = MutableStateFlow(false)
+    
+    val isJourneyModeEnabled = MutableStateFlow(false)
 
     val applications: StateFlow<List<JobApplication>> = combine(
         activeAccountFlow.filterNotNull(),
@@ -109,6 +112,20 @@ class MainViewModel @Inject constructor(
                 val time = if (it.createdAt > 0L) it.createdAt else parseLegacyDate(it.dateApplied)
                 time >= cutoff 
             }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val applicationJourneys: StateFlow<List<ApplicationJourney>> = combine(
+        applications,
+        activeAccountFlow.filterNotNull().flatMapLatest { accountId ->
+            eventRepository.getAllEventsForAccount(accountId)
+        }
+    ) { apps, events ->
+        apps.map { app ->
+            ApplicationJourney(
+                application = app,
+                timeline = events.filter { it.jobApplicationId == app.id }
+            )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

@@ -14,6 +14,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.ui.text.font.FontStyle
@@ -67,6 +70,8 @@ fun DashboardScreen(
     val timeFilter by viewModel.timeFilter.collectAsState()
     val heatmapData by viewModel.heatmapData.collectAsState()
     val selectedStages by viewModel.selectedStages.collectAsState()
+    val applicationJourneys by viewModel.applicationJourneys.collectAsState()
+    val isJourneyModeEnabled by viewModel.isJourneyModeEnabled.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -156,21 +161,56 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = "Recent Applications", style = MaterialTheme.typography.titleLarge)
-                    IconButton(onClick = { showSmartFilterSheet = true }) {
-                        Icon(Icons.Default.Star, "Smart Filters", tint = Color(0xFF5C6BC0))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = Color(0xFF2C2C2C),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(4.dp)) {
+                                IconButton(
+                                    onClick = { viewModel.isJourneyModeEnabled.value = false },
+                                    modifier = Modifier.background(if (!isJourneyModeEnabled) Color(0xFF5C6BC0) else Color.Transparent, RoundedCornerShape(8.dp)).size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.List, contentDescription = "List View", tint = Color.White, modifier = Modifier.size(18.dp))
+                                }
+                                IconButton(
+                                    onClick = { viewModel.isJourneyModeEnabled.value = true },
+                                    modifier = Modifier.background(if (isJourneyModeEnabled) Color(0xFF5C6BC0) else Color.Transparent, RoundedCornerShape(8.dp)).size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Timeline, contentDescription = "Journey View", tint = Color.White, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                        IconButton(onClick = { showSmartFilterSheet = true }) {
+                            Icon(Icons.Default.Star, "Smart Filters", tint = Color(0xFF5C6BC0))
+                        }
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(applications) { app ->
-                        val appColorString = activeAccount?.colorHash ?: "#5C6BC0"
-                        val appColor = Color(android.graphics.Color.parseColor(appColorString))
-                        ApplicationCard(app = app, accountColor = appColor, onClick = onApplicationClick)
+                if (isJourneyModeEnabled) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(applicationJourneys) { journey ->
+                            val appColorString = activeAccount?.colorHash ?: "#5C6BC0"
+                            val appColor = Color(android.graphics.Color.parseColor(appColorString))
+                            JourneyTimelineRow(journey = journey, accountColor = appColor, onClick = onApplicationClick)
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(applications) { app ->
+                            val appColorString = activeAccount?.colorHash ?: "#5C6BC0"
+                            val appColor = Color(android.graphics.Color.parseColor(appColorString))
+                            ApplicationCard(app = app, accountColor = appColor, onClick = onApplicationClick)
+                        }
                     }
                 }
             }
@@ -631,4 +671,80 @@ fun SmartFilterSheet(
         }
     }
 }
+@Composable
+fun JourneyTimelineRow(
+    journey: com.pranay.jobtracker.domain.ApplicationJourney,
+    accountColor: Color,
+    onClick: (Int) -> Unit
+) {
+    val app = journey.application
+    val events = journey.timeline.sortedBy { it.dateEpochMs }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(app.id) },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(accountColor))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${app.companyName} — ${app.jobTitle}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val uniqueEvents = events.distinctBy { it.detectedStatus }.filter { it.detectedStatus.isNotBlank() && it.detectedStatus != "Unknown" }
+                items(uniqueEvents) { event ->
+                    JourneyNode(label = event.detectedStatus, isFinal = false, color = Color.Gray)
+                    JourneyConnector()
+                }
+                
+                val currentStage = runCatching { com.pranay.jobtracker.data.ApplicationStage.valueOf(app.stage) }.getOrNull()
+                val stageLabel = currentStage?.label ?: app.stage
+                val stageColor = currentStage?.getColor() ?: Color(0xFF5C6BC0)
+                
+                item {
+                    JourneyNode(label = stageLabel, isFinal = true, color = stageColor)
+                }
+            }
+        }
+    }
+}
 
+@Composable
+fun JourneyNode(label: String, isFinal: Boolean, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (isFinal) color.copy(alpha = 0.2f) else Color(0xFF2C2C2C),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color)
+    ) {
+        Text(
+            text = label,
+            color = if (isFinal) color else Color.LightGray,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+fun JourneyConnector() {
+    Box(
+        modifier = Modifier
+            .width(20.dp)
+            .height(2.dp)
+            .background(Color(0xFF404040))
+    )
+}

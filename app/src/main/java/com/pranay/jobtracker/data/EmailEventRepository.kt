@@ -10,6 +10,9 @@ class EmailEventRepository @Inject constructor(private val dao: EmailEventDao) {
     fun getEventsForApplication(jobApplicationId: Int): Flow<List<EmailEvent>> =
         dao.getEventsForApplication(jobApplicationId)
 
+    fun getAllEventsForAccount(accountId: String): Flow<List<EmailEvent>> =
+        dao.getAllEventsForAccount(accountId)
+
     suspend fun getEventByGmailId(gmailMessageId: String): EmailEvent? =
         dao.getEventByGmailId(gmailMessageId)
 
