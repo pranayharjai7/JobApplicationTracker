@@ -42,8 +42,8 @@ fun AccountSwitcherSheet(
 ) {
     val context = LocalContext.current
     val privacyPolicyLink = stringResource(R.string.privacy_policy_link)
-    var showRemoveDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var showWipeDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showRemoveDialog by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var showWipeDialog by androidx.compose.runtime.remember { mutableStateOf(false) }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E1E1E),

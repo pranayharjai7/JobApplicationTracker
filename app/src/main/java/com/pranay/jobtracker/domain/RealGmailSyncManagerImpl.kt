@@ -1,7 +1,6 @@
 package com.pranay.jobtracker.domain
 
 import android.content.Context
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.json.gson.GsonFactory
@@ -9,7 +8,6 @@ import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.GmailScopes
 import com.pranay.jobtracker.data.JobApplicationRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
