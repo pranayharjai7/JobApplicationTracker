@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ApplicationDao {
-    @Query("SELECT * FROM applications ORDER BY lastUpdate DESC")
+    @Query("SELECT * FROM applications ORDER BY lastUpdatedAt DESC")
     fun getAllApplications(): Flow<List<JobApplication>>
 
     @Query("SELECT * FROM applications WHERE id = :id LIMIT 1")

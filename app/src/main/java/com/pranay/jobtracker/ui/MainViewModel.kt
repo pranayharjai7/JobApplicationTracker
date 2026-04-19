@@ -17,8 +17,9 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: JobApplicationRepository,
-    private val syncManager: GmailSyncManager,
-    private val syncEmailsUseCase: SyncEmailsUseCase
+    private val syncManager: com.pranay.jobtracker.domain.GmailSyncManager,
+    private val syncEmailsUseCase: com.pranay.jobtracker.domain.SyncEmailsUseCase,
+    private val metaRepository: com.pranay.jobtracker.data.SyncMetadataRepository
 ) : ViewModel() {
 
     private val _applications = MutableStateFlow<List<JobApplication>>(emptyList())
@@ -55,8 +56,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun clearDatabase() {
+        stopSyncing() // Ensure active background jobs are killed immediately
+        
         viewModelScope.launch {
             repository.clearAll()
+            metaRepository.clearMetadata()
         }
     }
 }

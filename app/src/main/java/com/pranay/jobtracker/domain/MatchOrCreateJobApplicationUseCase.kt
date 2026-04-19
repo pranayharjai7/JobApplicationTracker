@@ -25,7 +25,6 @@ class MatchOrCreateJobApplicationUseCase @Inject constructor(
         return if (existing != null) {
             Pair(existing, false)
         } else {
-            val now = System.currentTimeMillis()
             val newApp = JobApplication(
                 companyName    = parsedInfo.companyName.ifBlank { "Unknown Company" },
                 jobTitle       = parsedInfo.jobTitle.ifBlank { "Unknown Role" },
@@ -35,8 +34,8 @@ class MatchOrCreateJobApplicationUseCase @Inject constructor(
                 recruiterEmail = parsedInfo.recruiterEmail,
                 notes          = null,
                 emailId        = parsedInfo.sourceEmailId,
-                createdAt      = now,
-                lastUpdatedAt  = now
+                createdAt      = parsedInfo.dateEpochMs,
+                lastUpdatedAt  = parsedInfo.dateEpochMs
             )
             val id = appRepository.insertSingleApplication(newApp)
             Pair(newApp.copy(id = id.toInt()), true)

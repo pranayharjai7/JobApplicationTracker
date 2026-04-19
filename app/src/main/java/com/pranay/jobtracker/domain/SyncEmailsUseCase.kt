@@ -80,11 +80,10 @@ class SyncEmailsUseCase @Inject constructor(
                     val (jobApp, _) = matchOrCreate(parsed)
                     val added = addEmailEvent(parsed, jobApp.id)
                     if (added) {
-                        val now = System.currentTimeMillis()
                         appRepository.updateApplicationStatus(
                             id            = jobApp.id,
                             status        = parsed.status,
-                            lastUpdatedAt = now,
+                            lastUpdatedAt = parsed.dateEpochMs,
                             lastUpdate    = parsed.dateStr,
                             summary       = null   // generateSummary fills this below
                         )
@@ -93,7 +92,7 @@ class SyncEmailsUseCase @Inject constructor(
                             companyName      = jobApp.companyName,
                             jobTitle         = jobApp.jobTitle,
                             currentStatus    = parsed.status,
-                            lastUpdatedAt    = now,
+                            lastUpdatedAt    = parsed.dateEpochMs,
                             lastUpdate       = parsed.dateStr
                         )
                     }

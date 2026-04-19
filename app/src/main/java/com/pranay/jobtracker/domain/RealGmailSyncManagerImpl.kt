@@ -94,7 +94,8 @@ class RealGmailSyncManagerImpl(
                                 lastUpdate     = info.dateStr,
                                 recruiterEmail = info.recruiterEmail,
                                 notes          = null,
-                                emailId        = info.sourceEmailId
+                                emailId        = info.sourceEmailId,
+                                lastUpdatedAt  = info.dateEpochMs
                             )
                         })
                     } else {
