@@ -26,5 +26,6 @@ data class EmailEvent(
     val dateEpochMs: Long,
     val snippet: String,
     val detectedStatus: String,
-    val summary: String? = null
+    val summary: String? = null,
+    val accountId: String = "legacy_account"
 )

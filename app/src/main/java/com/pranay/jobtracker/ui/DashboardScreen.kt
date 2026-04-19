@@ -25,7 +25,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.gmail.GmailScopes
 import com.pranay.jobtracker.data.JobApplication
-import kotlinx.coroutines.delay
+import com.pranay.jobtracker.data.AccountInfo
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +38,20 @@ fun DashboardScreen(
     onApplicationClick: (Int) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val applications by viewModel.applications.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
-    val context = LocalContext.current
+    val accounts by viewModel.accountRepository.getActiveAccountsFlow().collectAsState(initial = emptyList())
+    val activeAccountId by viewModel.activeAccountFlow.collectAsState(initial = null)
+    val activeAccount = accounts.find { it.accountId == activeAccountId }
+
+    var showAccountSwitcher by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
+            .requestProfile()
             .requestScopes(Scope(GmailScopes.GMAIL_READONLY))
             .build()
     }
@@ -48,7 +60,17 @@ fun DashboardScreen(
     val signInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        viewModel.syncEmails()
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        task.addOnSuccessListener { account ->
+            scope.launch {
+                val email = account.email ?: return@launch
+                val displayName = account.displayName ?: email
+                val photoUrl = account.photoUrl?.toString() ?: ""
+                val savedAccount = viewModel.accountRepository.addOrUpdateAccount(email, displayName, photoUrl)
+                viewModel.accountRepository.setActiveAccount(savedAccount.accountId)
+                viewModel.syncEmails()
+            }
+        }
     }
 
     val pullToRefreshState = rememberPullToRefreshState()
@@ -84,6 +106,8 @@ fun DashboardScreen(
                 .padding(16.dp)
         ) {
             HeaderSection(
+                activeAccount = activeAccount,
+                onProfileClick = { showAccountSwitcher = true },
                 onDeleteClick = { viewModel.clearDatabase() },
                 onStopClick = { viewModel.stopSyncing() },
                 isSyncing = isSyncing
@@ -99,7 +123,9 @@ fun DashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(applications) { app ->
-                    ApplicationCard(app, onClick = onApplicationClick)
+                    val appColorString = activeAccount?.colorHash ?: "#5C6BC0"
+                    val appColor = Color(android.graphics.Color.parseColor(appColorString))
+                    ApplicationCard(app = app, accountColor = appColor, onClick = onApplicationClick)
                 }
             }
         }
@@ -111,17 +137,54 @@ fun DashboardScreen(
             contentColor = Color(0xFF5C6BC0)
         )
     }
+
+    if (showAccountSwitcher) {
+        AccountSwitcherSheet(
+            activeAccount = activeAccount,
+            accounts = accounts,
+            onDismiss = { showAccountSwitcher = false },
+            onAccountSelected = { account ->
+                scope.launch {
+                    viewModel.accountRepository.setActiveAccount(account.accountId)
+                }
+            },
+            onAddAccount = {
+                signInLauncher.launch(googleSignInClient.signInIntent)
+            },
+            onSignOut = { account ->
+                scope.launch {
+                    viewModel.accountRepository.signOutAccount(account.accountId)
+                    googleSignInClient.signOut()
+                }
+            },
+            onRemoveAccount = { account ->
+                scope.launch {
+                    viewModel.accountRepository.removeAccountAndData(account.accountId)
+                    googleSignInClient.signOut()
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun HeaderSection(onDeleteClick: () -> Unit, onStopClick: () -> Unit, isSyncing: Boolean) {
+fun HeaderSection(
+    activeAccount: AccountInfo?,
+    onProfileClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onStopClick: () -> Unit,
+    isSyncing: Boolean
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("JobTracker", style = MaterialTheme.typography.titleLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Button(
                 onClick = onDeleteClick,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
@@ -135,6 +198,28 @@ fun HeaderSection(onDeleteClick: () -> Unit, onStopClick: () -> Unit, isSyncing:
                 ) {
                     Text("Stop Sync")
                 }
+            }
+
+            // Profile Avatar Button
+            if (activeAccount != null) {
+                AsyncImage(
+                    model = activeAccount.photoUrl.ifBlank { "https://ui-avatars.com/api/?name=${activeAccount.displayName.replace(" ", "+")}&background=${activeAccount.colorHash.removePrefix("#")}&color=fff" },
+                    contentDescription = "Profile",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray)
+                        .clickable(onClick = onProfileClick),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray)
+                        .clickable(onClick = onProfileClick)
+                )
             }
         }
     }
@@ -164,7 +249,7 @@ fun StatCard(title: String, count: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ApplicationCard(app: JobApplication, onClick: (Int) -> Unit) {
+fun ApplicationCard(app: JobApplication, accountColor: Color, onClick: (Int) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -173,7 +258,16 @@ fun ApplicationCard(app: JobApplication, onClick: (Int) -> Unit) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(app.companyName, fontWeight = FontWeight.Bold, color = Color.White)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(accountColor)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(app.companyName, fontWeight = FontWeight.Bold, color = Color.White)
+            }
             Text(app.jobTitle, color = Color(0xFFA0A0A0))
             Spacer(modifier = Modifier.height(8.dp))
             Row(

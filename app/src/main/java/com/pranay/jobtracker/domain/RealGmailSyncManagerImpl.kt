@@ -21,6 +21,7 @@ class RealGmailSyncManagerImpl(
 
     override suspend fun syncRecentJobEmails() {
         val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
+        val accountId = account.email ?: "legacy_account"
         
         withContext(Dispatchers.IO) {
             try {
@@ -48,7 +49,7 @@ class RealGmailSyncManagerImpl(
                 val messages = response.messages ?: emptyList()
                 
                 val fetchedIds = messages.map { it.id }
-                val knownIds = if (fetchedIds.isNotEmpty()) repository.getExistingEmailIds(fetchedIds) else emptyList()
+                val knownIds = if (fetchedIds.isNotEmpty()) repository.getExistingEmailIds(fetchedIds, accountId) else emptyList()
                 
                 if (messages.isEmpty()) {
                     repository.insertApplications(listOf(
@@ -59,7 +60,8 @@ class RealGmailSyncManagerImpl(
                             status = "Empty",
                             lastUpdate = "Now",
                             recruiterEmail = null,
-                            notes = "Your inbox query found zero results."
+                            notes = "Your inbox query found zero results.",
+                            accountId = accountId
                         )
                     ))
                 }
@@ -95,7 +97,8 @@ class RealGmailSyncManagerImpl(
                                 recruiterEmail = info.recruiterEmail,
                                 notes          = null,
                                 emailId        = info.sourceEmailId,
-                                lastUpdatedAt  = info.dateEpochMs
+                                lastUpdatedAt  = info.dateEpochMs,
+                                accountId      = accountId
                             )
                         })
                     } else {
@@ -107,7 +110,8 @@ class RealGmailSyncManagerImpl(
                                 status = "Done",
                                 lastUpdate = "Now",
                                 recruiterEmail = null,
-                                notes = "Scanned ${rawBatch.size} emails, but Gemini didn't find any job applications in this batch."
+                                notes = "Scanned ${rawBatch.size} emails, but Gemini didn't find any job applications in this batch.",
+                                accountId = accountId
                             )
                         ))
                     }
@@ -123,7 +127,8 @@ class RealGmailSyncManagerImpl(
                         status = "Exception",
                         lastUpdate = "Now",
                         recruiterEmail = null,
-                        notes = e.message ?: e.toString()
+                        notes = e.message ?: e.toString(),
+                        accountId = accountId
                     )
                 ))
             }

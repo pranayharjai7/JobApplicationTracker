@@ -36,12 +36,21 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "job_tracker_db"
-        ).addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4).build()
+        ).addMigrations(
+            AppDatabase.MIGRATION_2_3, 
+            AppDatabase.MIGRATION_3_4,
+            AppDatabase.MIGRATION_4_5
+        ).build()
     }
 
     @Provides
     fun provideApplicationDao(db: AppDatabase): ApplicationDao {
         return db.applicationDao()
+    }
+
+    @Provides
+    fun provideAccountInfoDao(db: AppDatabase): com.pranay.jobtracker.data.AccountInfoDao {
+        return db.accountInfoDao()
     }
 
     @Provides

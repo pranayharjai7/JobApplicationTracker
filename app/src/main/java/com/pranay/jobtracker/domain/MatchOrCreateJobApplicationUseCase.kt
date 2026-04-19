@@ -14,12 +14,12 @@ class MatchOrCreateJobApplicationUseCase @Inject constructor(
      * Matches on normalized companyName + jobTitle via DB query.
      * Creates a new entry when either field is blank or no match is found.
      */
-    suspend operator fun invoke(parsedInfo: ParsedEmailInfo): Pair<JobApplication, Boolean> {
+    suspend operator fun invoke(parsedInfo: ParsedEmailInfo, accountId: String): Pair<JobApplication, Boolean> {
         val normCompany = EmailMatcher.normalize(parsedInfo.companyName)
         val normTitle   = EmailMatcher.normalize(parsedInfo.jobTitle)
 
         val existing = if (normCompany.isNotBlank() && normTitle.isNotBlank()) {
-            appRepository.findByNormalizedKey(normCompany, normTitle)
+            appRepository.findByNormalizedKey(normCompany, normTitle, accountId)
         } else null
 
         return if (existing != null) {
@@ -34,6 +34,7 @@ class MatchOrCreateJobApplicationUseCase @Inject constructor(
                 recruiterEmail = parsedInfo.recruiterEmail,
                 notes          = null,
                 emailId        = parsedInfo.sourceEmailId,
+                accountId      = accountId,
                 createdAt      = parsedInfo.dateEpochMs,
                 lastUpdatedAt  = parsedInfo.dateEpochMs
             )

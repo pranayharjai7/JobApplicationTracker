@@ -8,11 +8,11 @@ import javax.inject.Singleton
 class JobApplicationRepository @Inject constructor(
     private val dao: ApplicationDao
 ) {
-    fun getAllApplications(): Flow<List<JobApplication>> = dao.getAllApplications()
+    fun getAllApplications(accountId: String): Flow<List<JobApplication>> = dao.getAllApplications(accountId)
 
-    fun getApplicationById(id: Int): Flow<JobApplication?> = dao.getApplicationById(id)
+    fun getApplicationById(id: Int, accountId: String): Flow<JobApplication?> = dao.getApplicationById(id, accountId)
 
-    suspend fun getExistingEmailIds(emailIds: List<String>): List<String> = dao.getExistingEmailIds(emailIds)
+    suspend fun getExistingEmailIds(emailIds: List<String>, accountId: String): List<String> = dao.getExistingEmailIds(emailIds, accountId)
 
     suspend fun insertApplications(applications: List<JobApplication>) {
         dao.insertApplications(applications)
@@ -21,13 +21,13 @@ class JobApplicationRepository @Inject constructor(
     suspend fun insertSingleApplication(application: JobApplication): Long =
         dao.insertSingleApplication(application)
 
-    suspend fun findByNormalizedKey(normalizedCompany: String, normalizedTitle: String): JobApplication? =
-        dao.findByNormalizedKey(normalizedCompany, normalizedTitle)
+    suspend fun findByNormalizedKey(normalizedCompany: String, normalizedTitle: String, accountId: String): JobApplication? =
+        dao.findByNormalizedKey(normalizedCompany, normalizedTitle, accountId)
 
     suspend fun updateApplicationStatus(id: Int, status: String, lastUpdatedAt: Long, lastUpdate: String, summary: String?) =
         dao.updateStatusAndTimestamp(id, status, lastUpdate, lastUpdatedAt, summary)
 
-    suspend fun clearAll() {
-        dao.deleteAll()
+    suspend fun clearAccountData(accountId: String) {
+        dao.deleteByAccount(accountId)
     }
 }

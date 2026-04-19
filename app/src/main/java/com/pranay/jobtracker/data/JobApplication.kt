@@ -23,5 +23,6 @@ data class JobApplication(
     val emailId: String? = null,
     val createdAt: Long = 0L,
     val lastUpdatedAt: Long = 0L,
-    val summary: String? = null
+    val summary: String? = null,
+    val accountId: String = "legacy_account"
 )

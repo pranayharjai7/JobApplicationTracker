@@ -13,12 +13,13 @@ class AddEmailEventUseCase @Inject constructor(
      * Inserts a new EmailEvent for the given jobApplicationId.
      * Returns true if inserted, false if the gmailMessageId was already present.
      */
-    suspend operator fun invoke(parsedInfo: ParsedEmailInfo, jobApplicationId: Int): Boolean {
+    suspend operator fun invoke(parsedInfo: ParsedEmailInfo, jobApplicationId: Int, accountId: String): Boolean {
         if (eventRepository.getEventByGmailId(parsedInfo.sourceEmailId) != null) return false
 
         val event = EmailEvent(
             jobApplicationId = jobApplicationId,
             gmailMessageId   = parsedInfo.sourceEmailId,
+            accountId        = accountId,
             date             = parsedInfo.dateStr,
             dateEpochMs      = parsedInfo.dateEpochMs,
             snippet          = parsedInfo.snippet,

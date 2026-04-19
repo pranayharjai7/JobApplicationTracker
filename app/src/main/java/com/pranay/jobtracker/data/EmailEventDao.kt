@@ -23,4 +23,10 @@ interface EmailEventDao {
 
     @Query("DELETE FROM email_events")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM email_events WHERE accountId = :accountId")
+    suspend fun deleteByAccount(accountId: String)
+
+    @Query("UPDATE email_events SET accountId = :newAccountId WHERE accountId = 'legacy_account'")
+    suspend fun adoptLegacyData(newAccountId: String)
 }

@@ -12,38 +12,46 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
 @HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel @Inject constructor(
     private val repository: JobApplicationRepository,
     private val syncManager: com.pranay.jobtracker.domain.GmailSyncManager,
     private val syncEmailsUseCase: com.pranay.jobtracker.domain.SyncEmailsUseCase,
-    private val metaRepository: com.pranay.jobtracker.data.SyncMetadataRepository
+    private val metaRepository: com.pranay.jobtracker.data.SyncMetadataRepository,
+    val accountRepository: com.pranay.jobtracker.data.AccountRepository
 ) : ViewModel() {
 
-    private val _applications = MutableStateFlow<List<JobApplication>>(emptyList())
-    val applications: StateFlow<List<JobApplication>> = _applications.asStateFlow()
+    val activeAccountFlow = accountRepository.activeAccountIdFlow
+
+    val applications: StateFlow<List<JobApplication>> = accountRepository.activeAccountIdFlow
+        .filterNotNull()
+        .flatMapLatest { accountId ->
+            repository.getAllApplications(accountId)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            repository.getAllApplications().collect { apps ->
-                _applications.value = apps
-            }
-        }
-    }
+    // Init block removed since stateIn handles the startup collection
 
     private var syncJob: Job? = null
 
     fun syncEmails() {
         if (_isSyncing.value) return
         syncJob = viewModelScope.launch {
+            val accountId = accountRepository.getActiveAccountId() ?: return@launch
             _isSyncing.value = true
             try {
-                syncEmailsUseCase()
+                syncEmailsUseCase(accountId)
             } finally {
                 _isSyncing.value = false
             }
@@ -59,8 +67,9 @@ class MainViewModel @Inject constructor(
         stopSyncing() // Ensure active background jobs are killed immediately
         
         viewModelScope.launch {
-            repository.clearAll()
-            metaRepository.clearMetadata()
+            val accountId = accountRepository.getActiveAccountId() ?: return@launch
+            repository.clearAccountData(accountId)
+            metaRepository.clearMetadata(accountId)
         }
     }
 }

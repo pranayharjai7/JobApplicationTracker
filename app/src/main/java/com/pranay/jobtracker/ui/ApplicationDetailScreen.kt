@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pranay.jobtracker.data.EmailEvent
 
@@ -27,6 +29,9 @@ fun ApplicationDetailScreen(
 ) {
     val application by viewModel.application.collectAsState()
     val events by viewModel.events.collectAsState()
+    val accountInfo by viewModel.accountInfo.collectAsState()
+
+    val accountColor = accountInfo?.colorHash?.let { Color(android.graphics.Color.parseColor(it)) } ?: Color(0xFF5C6BC0)
 
     Scaffold(
         topBar = {
@@ -55,7 +60,16 @@ fun ApplicationDetailScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(app.jobTitle, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(accountColor)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(app.jobTitle, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Badge(app.status)
@@ -82,7 +96,7 @@ fun ApplicationDetailScreen(
                     Text("Email Timeline", fontWeight = FontWeight.Bold, color = Color.LightGray)
                     Spacer(modifier = Modifier.height(4.dp))
                     events.forEach { event ->
-                        EmailEventItem(event)
+                        EmailEventItem(event, accountColor)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -92,7 +106,7 @@ fun ApplicationDetailScreen(
 }
 
 @Composable
-fun EmailEventItem(event: EmailEvent) {
+fun EmailEventItem(event: EmailEvent, accountColor: Color) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,7 +118,16 @@ fun EmailEventItem(event: EmailEvent) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Badge(status = event.detectedStatus)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(accountColor)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Badge(status = event.detectedStatus)
+            }
             Text(
                 text = event.date,
                 style = MaterialTheme.typography.labelSmall,

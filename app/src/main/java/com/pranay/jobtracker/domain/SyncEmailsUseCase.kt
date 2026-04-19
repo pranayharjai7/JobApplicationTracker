@@ -34,7 +34,7 @@ class SyncEmailsUseCase @Inject constructor(
     private val generateSummary: GenerateJobSummaryUseCase
 ) {
 
-    suspend operator fun invoke() {
+    suspend operator fun invoke(accountId: String) {
         val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
 
         withContext(Dispatchers.IO) {
@@ -48,7 +48,7 @@ class SyncEmailsUseCase @Inject constructor(
                 credential
             ).setApplicationName("JobApplicationTracker").build()
 
-            val metadata = metaRepository.getMetadata()
+            val metadata = metaRepository.getMetadata(accountId)
             val (windowStart, windowEnd) = computeWindow(metadata)
             val query = buildQuery(windowStart, windowEnd)
 
@@ -60,8 +60,7 @@ class SyncEmailsUseCase @Inject constructor(
             val messages = response.messages ?: emptyList()
 
             // Advance the window pointer so each sync steps back in history.
-            // Re-processing is prevented at the EmailEvent level (unique gmailMessageId index).
-            metaRepository.saveMetadata(SyncMetadata(oldestFetchedEpochMs = windowStart))
+            metaRepository.saveMetadata(SyncMetadata(accountId = accountId, oldestFetchedEpochMs = windowStart))
 
             if (messages.isEmpty()) return@withContext
 
@@ -77,8 +76,8 @@ class SyncEmailsUseCase @Inject constructor(
                 val parsedList: List<ParsedEmailInfo> = emailParser.parseEmailBatch(chunk)
                 for (parsed in parsedList) {
                     if (!isActive) return@withContext
-                    val (jobApp, _) = matchOrCreate(parsed)
-                    val added = addEmailEvent(parsed, jobApp.id)
+                    val (jobApp, _) = matchOrCreate(parsed, accountId)
+                    val added = addEmailEvent(parsed, jobApp.id, accountId)
                     if (added) {
                         appRepository.updateApplicationStatus(
                             id            = jobApp.id,
