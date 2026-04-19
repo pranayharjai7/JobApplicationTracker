@@ -20,6 +20,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import com.pranay.jobtracker.data.ApplicationStage
+import com.pranay.jobtracker.domain.ai.AIProviderFactory
+import com.pranay.jobtracker.domain.SmartFilterSuggestion
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -49,7 +54,8 @@ class MainViewModel @Inject constructor(
     private val syncManager: com.pranay.jobtracker.domain.GmailSyncManager,
     private val syncEmailsUseCase: com.pranay.jobtracker.domain.SyncEmailsUseCase,
     private val metaRepository: com.pranay.jobtracker.data.SyncMetadataRepository,
-    val accountRepository: com.pranay.jobtracker.data.AccountRepository
+    val accountRepository: com.pranay.jobtracker.data.AccountRepository,
+    private val aiProviderFactory: com.pranay.jobtracker.domain.ai.AIProviderFactory
 ) : ViewModel() {
 
     val activeAccountFlow = accountRepository.activeAccountIdFlow
@@ -71,6 +77,9 @@ class MainViewModel @Inject constructor(
     val selectedCompanies = MutableStateFlow<Set<String>>(emptySet())
     val timeFilter = MutableStateFlow(TimeFilter.ALL)
     val selectedStages = MutableStateFlow<Set<ApplicationStage>>(emptySet())
+    
+    val aiSmartFilters = MutableStateFlow<List<SmartFilterSuggestion>?>(null)
+    val isFetchingAiFilters = MutableStateFlow(false)
 
     val applications: StateFlow<List<JobApplication>> = combine(
         activeAccountFlow.filterNotNull(),
@@ -181,6 +190,69 @@ class MainViewModel @Inject constructor(
     fun clearStageFilters() {
         selectedStages.value = emptySet()
     }
+
+    fun applySmartFilter(suggestion: SmartFilterSuggestion) {
+        if (suggestion.timeFilter != null) timeFilter.value = suggestion.timeFilter
+        selectedStages.value = suggestion.stages?.toSet() ?: emptySet()
+        selectedCompanies.value = suggestion.companies?.toSet() ?: emptySet()
+    }
+
+    fun fetchSmartFilters() {
+        if (aiSmartFilters.value != null || isFetchingAiFilters.value) return
+        viewModelScope.launch(Dispatchers.IO) {
+            isFetchingAiFilters.value = true
+            try {
+                val prompt = """
+                    You are an intelligent Job Application Assistant tracking the user's dashboard.
+                    Suggest exactly 3 "Smart Filters" the user might want to apply right now. Example: "Needs Follow Up" (IN_REVIEW, 1Month), "Recent Rejections", or "Active Interviews".
+                    Return a JSON array of objects matching this exact structure:
+                    [
+                      {
+                        "label": "Short Actionable Title (e.g. Follow up on Interviews)",
+                        "rationale": "Why this filter helps.",
+                        "timeFilter": "ONE_WEEK | ONE_MONTH | THREE_MONTHS | SIX_MONTHS | ONE_YEAR | ALL",
+                        "stages": ["INTERVIEW"],  
+                        "companies": []
+                      }
+                    ]
+                    Only return the raw JSON Array block. No markdown.
+                """.trimIndent()
+                
+                val provider = aiProviderFactory.getProvider()
+                var text = provider.generateContent(prompt)
+                
+                if (text.contains("[")) {
+                     text = text.substring(text.indexOf("["), text.lastIndexOf("]") + 1)
+                }
+                
+                val listType = object : TypeToken<List<SmartFilterSuggestionDto>>() {}.type
+                val dtos: List<SmartFilterSuggestionDto> = Gson().fromJson(text as String, listType)
+                
+                val mapped = dtos.map { dto ->
+                     SmartFilterSuggestion(
+                         label = dto.label,
+                         rationale = dto.rationale,
+                         timeFilter = runCatching { TimeFilter.valueOf(dto.timeFilter ?: "ALL") }.getOrNull(),
+                         stages = dto.stages?.mapNotNull { s -> runCatching { ApplicationStage.valueOf(s) }.getOrNull() },
+                         companies = dto.companies
+                     )
+                }
+                aiSmartFilters.value = mapped
+            } catch(e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isFetchingAiFilters.value = false
+            }
+        }
+    }
+
+    private data class SmartFilterSuggestionDto(
+        val label: String,
+        val rationale: String,
+        val timeFilter: String?,
+        val stages: List<String>?,
+        val companies: List<String>?
+    )
 
     private fun parseLegacyDate(dateStr: String): Long {
         if (dateStr.isBlank() || dateStr == "Recent") return System.currentTimeMillis()
