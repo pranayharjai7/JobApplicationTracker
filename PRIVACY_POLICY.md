@@ -41,5 +41,3 @@ JobTrack's use and transfer of information received from Google APIs will adhere
 For concerns regarding this policy, please contact us via the support channel in our Play Store listing.
 
 ---
-
-**Note to User**: You must host this policy at a public URL (e.g., GitHub Pages) before submitting to the Google Play Store.

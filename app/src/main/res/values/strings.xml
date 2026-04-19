@@ -39,4 +39,5 @@
     <string name="email_timeline_title">Email Timeline</string>
     <string name="action_stop">Stop</string>
     <string name="syncing_status">Syncing... Tap to stop</string>
+    <string name="privacy_policy_link">https://github.com/pranayharjai7/JobApplicationTracker/blob/master/PRIVACY_POLICY.md</string>
 </resources>

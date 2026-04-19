@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.*
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import com.pranay.jobtracker.R
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -37,6 +40,8 @@ fun AccountSwitcherSheet(
     onRemoveAccount: (AccountInfo) -> Unit,
     onWipeData: () -> Unit
 ) {
+    val context = LocalContext.current
+    val privacyPolicyLink = stringResource(R.string.privacy_policy_link)
     var showRemoveDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     var showWipeDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     ModalBottomSheet(
@@ -118,8 +123,9 @@ fun AccountSwitcherSheet(
                     icon = Icons.Default.PrivacyTip,
                     color = Color.Gray,
                     onClick = {
-                        // For now we just show a toast or could open the link
-                        // In production this will open the URL provided in the Data Safety form
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyLink))
+                        context.startActivity(intent)
+                        onDismiss()
                     }
                 )
             }
