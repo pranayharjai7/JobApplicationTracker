@@ -3,6 +3,8 @@ package com.pranay.jobtracker.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pranay.jobtracker.data.EmailEvent
+import com.pranay.jobtracker.data.EmailEventRepository
 import com.pranay.jobtracker.data.JobApplication
 import com.pranay.jobtracker.data.JobApplicationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ApplicationDetailViewModel @Inject constructor(
     repository: JobApplicationRepository,
+    eventRepository: EmailEventRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -21,4 +24,7 @@ class ApplicationDetailViewModel @Inject constructor(
 
     val application: StateFlow<JobApplication?> = repository.getApplicationById(id)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val events: StateFlow<List<EmailEvent>> = eventRepository.getEventsForApplication(id)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

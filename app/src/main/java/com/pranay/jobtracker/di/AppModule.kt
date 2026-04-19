@@ -4,9 +4,18 @@ import android.content.Context
 import androidx.room.Room
 import com.pranay.jobtracker.data.AppDatabase
 import com.pranay.jobtracker.data.ApplicationDao
+import com.pranay.jobtracker.data.EmailEventDao
+import com.pranay.jobtracker.data.EmailEventRepository
 import com.pranay.jobtracker.data.JobApplicationRepository
+import com.pranay.jobtracker.data.SyncMetadataDao
+import com.pranay.jobtracker.data.SyncMetadataRepository
+import com.pranay.jobtracker.domain.AddEmailEventUseCase
 import com.pranay.jobtracker.domain.EmailParser
+import com.pranay.jobtracker.domain.EmailPreprocessor
+import com.pranay.jobtracker.domain.GenerateJobSummaryUseCase
 import com.pranay.jobtracker.domain.GmailSyncManager
+import com.pranay.jobtracker.domain.MatchOrCreateJobApplicationUseCase
+import com.pranay.jobtracker.domain.SyncEmailsUseCase
 import com.pranay.jobtracker.domain.RealEmailParserImpl
 import com.pranay.jobtracker.domain.RealGmailSyncManagerImpl
 import dagger.Module
@@ -27,7 +36,7 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "job_tracker_db"
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4).build()
     }
 
     @Provides
@@ -36,9 +45,37 @@ object AppModule {
     }
 
     @Provides
+    fun provideSyncMetadataDao(db: AppDatabase): SyncMetadataDao {
+        return db.syncMetadataDao()
+    }
+
+    @Provides
+    fun provideEmailEventDao(db: AppDatabase): EmailEventDao {
+        return db.emailEventDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideEmailEventRepository(dao: EmailEventDao): EmailEventRepository {
+        return EmailEventRepository(dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSyncMetadataRepository(dao: SyncMetadataDao): SyncMetadataRepository {
+        return SyncMetadataRepository(dao)
+    }
+
+    @Provides
     @Singleton
     fun provideEmailParser(): EmailParser {
         return RealEmailParserImpl()
+    }
+
+    @Provides
+    @Singleton
+    fun provideEmailPreprocessor(): EmailPreprocessor {
+        return EmailPreprocessor()
     }
 
     @Provides
@@ -50,4 +87,39 @@ object AppModule {
     ): GmailSyncManager {
         return RealGmailSyncManagerImpl(context, repository, emailParser)
     }
+
+    @Provides
+    @Singleton
+    fun provideMatchOrCreateJobApplicationUseCase(
+        appRepository: JobApplicationRepository
+    ): MatchOrCreateJobApplicationUseCase = MatchOrCreateJobApplicationUseCase(appRepository)
+
+    @Provides
+    @Singleton
+    fun provideAddEmailEventUseCase(
+        eventRepository: EmailEventRepository
+    ): AddEmailEventUseCase = AddEmailEventUseCase(eventRepository)
+
+    @Provides
+    @Singleton
+    fun provideGenerateJobSummaryUseCase(
+        eventRepository: EmailEventRepository,
+        appRepository: JobApplicationRepository
+    ): GenerateJobSummaryUseCase = GenerateJobSummaryUseCase(eventRepository, appRepository)
+
+    @Provides
+    @Singleton
+    fun provideSyncEmailsUseCase(
+        @ApplicationContext context: Context,
+        appRepository: JobApplicationRepository,
+        metaRepository: SyncMetadataRepository,
+        emailParser: EmailParser,
+        preprocessor: EmailPreprocessor,
+        matchOrCreate: MatchOrCreateJobApplicationUseCase,
+        addEmailEvent: AddEmailEventUseCase,
+        generateSummary: GenerateJobSummaryUseCase
+    ): SyncEmailsUseCase = SyncEmailsUseCase(
+        context, appRepository, metaRepository, emailParser, preprocessor,
+        matchOrCreate, addEmailEvent, generateSummary
+    )
 }

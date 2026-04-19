@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pranay.jobtracker.data.JobApplication
 import com.pranay.jobtracker.data.JobApplicationRepository
 import com.pranay.jobtracker.domain.GmailSyncManager
+import com.pranay.jobtracker.domain.SyncEmailsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: JobApplicationRepository,
-    private val syncManager: GmailSyncManager
+    private val syncManager: GmailSyncManager,
+    private val syncEmailsUseCase: SyncEmailsUseCase
 ) : ViewModel() {
 
     private val _applications = MutableStateFlow<List<JobApplication>>(emptyList())
@@ -39,8 +41,11 @@ class MainViewModel @Inject constructor(
         if (_isSyncing.value) return
         syncJob = viewModelScope.launch {
             _isSyncing.value = true
-            syncManager.syncRecentJobEmails()
-            _isSyncing.value = false
+            try {
+                syncEmailsUseCase()
+            } finally {
+                _isSyncing.value = false
+            }
         }
     }
 

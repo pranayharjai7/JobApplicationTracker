@@ -5,7 +5,8 @@ import com.google.ai.client.generativeai.type.content
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.pranay.jobtracker.BuildConfig
-import com.pranay.jobtracker.data.JobApplication
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class RealEmailParserImpl : EmailParser {
 
@@ -16,19 +17,28 @@ class RealEmailParserImpl : EmailParser {
 
     private val gson = GsonBuilder().setLenient().create()
 
-    override suspend fun parseEmailBatch(emails: List<RawEmailData>): List<JobApplication> {
+    // RFC 2822 date format patterns used by Gmail headers
+    private val dateFormats = listOf(
+        "EEE, dd MMM yyyy HH:mm:ss Z",
+        "dd MMM yyyy HH:mm:ss Z",
+        "EEE, d MMM yyyy HH:mm:ss Z",
+        "d MMM yyyy HH:mm:ss Z"
+    )
+
+    override suspend fun parseEmailBatch(emails: List<RawEmailData>): List<ParsedEmailInfo> {
         if (emails.isEmpty()) return emptyList()
 
         val emailsText = emails.mapIndexed { index, email ->
-            val actualDate = email.date.substringBefore("||")
-            val emailId = email.date.substringAfter("||")
+            val actualDate = email.date
+            val emailId = email.emailId
             """
             --- EMAIL ${index + 1} ---
             Email ID: $emailId
             Date: $actualDate
+            From: ${email.from}
             Subject: ${email.subject}
             Body:
-            ${email.body.take(2000)}
+            ${email.body.take(500)}
             """.trimIndent()
         }.joinToString("\n\n")
 
@@ -49,7 +59,7 @@ class RealEmailParserImpl : EmailParser {
             ]
             Do not include any markdown formatting like ```json or anything else. Just the raw JSON block.
             If an email is definitively NOT about a job application, strictly ignore it and do NOT include it in the array.
-            
+
             EMAILS TO PROCESS:
             $emailsText
         """.trimIndent()
@@ -74,41 +84,37 @@ class RealEmailParserImpl : EmailParser {
 
             parsedList.mapNotNull { dto ->
                 if (dto.companyName.isNullOrEmpty() && dto.jobTitle.isNullOrEmpty()) return@mapNotNull null
-                
-                JobApplication(
-                    companyName = dto.companyName ?: "Unknown Company",
-                    jobTitle = dto.jobTitle ?: "Unknown Role",
-                    dateApplied = dto.dateApplied ?: "Recent",
-                    status = dto.status ?: "Unknown",
-                    lastUpdate = dto.dateApplied ?: "Recent",
+                val emailData = emails.firstOrNull { it.emailId == dto.sourceEmailId } ?: emails.first()
+                val dateStr = dto.dateApplied ?: emailData.date
+
+                ParsedEmailInfo(
+                    sourceEmailId  = dto.sourceEmailId ?: emailData.emailId,
+                    companyName    = dto.companyName ?: "Unknown Company",
+                    jobTitle       = dto.jobTitle ?: "Unknown Role",
+                    status         = dto.status ?: "Unknown",
+                    dateStr        = dateStr,
+                    dateEpochMs    = parseRfc2822ToEpoch(dateStr),
                     recruiterEmail = dto.recruiterEmail,
-                    notes = dto.notes,
-                    emailId = dto.sourceEmailId
+                    snippet        = emailData.body
                 )
             }
         } catch (e: com.google.ai.client.generativeai.type.QuotaExceededException) {
             e.printStackTrace()
-            listOf(JobApplication(
-                companyName = "Sync Paused",
-                jobTitle = "Quota Exceeded",
-                dateApplied = "Now",
-                status = "Limit Hit",
-                lastUpdate = "Now",
-                recruiterEmail = null,
-                notes = "Google Gemini Free Tier limit reached. Please wait a minute and try again."
-            ))
+            emptyList()
         } catch (e: Exception) {
             e.printStackTrace()
-            listOf(JobApplication(
-                companyName = "Debug: Gemini Crash",
-                jobTitle = e.javaClass.simpleName,
-                dateApplied = "Now",
-                status = "Error",
-                lastUpdate = "Now",
-                recruiterEmail = null,
-                notes = e.message ?: e.toString()
-            ))
+            emptyList()
         }
+    }
+
+    private fun parseRfc2822ToEpoch(dateStr: String): Long {
+        if (dateStr.isBlank()) return 0L
+        for (pattern in dateFormats) {
+            runCatching {
+                SimpleDateFormat(pattern, Locale.ENGLISH).parse(dateStr.trim())?.time
+            }.getOrNull()?.let { return it }
+        }
+        return 0L
     }
 
     private data class JobApplicationDto(

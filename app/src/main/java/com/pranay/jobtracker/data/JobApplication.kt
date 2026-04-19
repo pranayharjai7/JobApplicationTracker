@@ -1,9 +1,16 @@
 package com.pranay.jobtracker.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "applications")
+@Entity(
+    tableName = "applications",
+    indices = [
+        Index("companyName"),
+        Index("jobTitle")
+    ]
+)
 data class JobApplication(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val companyName: String,
@@ -13,5 +20,8 @@ data class JobApplication(
     val lastUpdate: String,
     val recruiterEmail: String?,
     val notes: String?,
-    val emailId: String? = null
+    val emailId: String? = null,
+    val createdAt: Long = 0L,
+    val lastUpdatedAt: Long = 0L,
+    val summary: String? = null
 )

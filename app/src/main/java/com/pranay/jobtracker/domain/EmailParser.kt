@@ -4,26 +4,33 @@ import com.pranay.jobtracker.data.JobApplication
 
 /**
  * Interface representing the AI/NLP Service that parses raw email text
- * into a structured [JobApplication].
+ * into structured [ParsedEmailInfo] for each detected job application.
  */
-data class RawEmailData(val subject: String, val body: String, val date: String)
+data class RawEmailData(
+    val emailId: String,      // Gmail message ID — no longer smuggled inside date
+    val subject: String,
+    val body: String,
+    val date: String,         // clean RFC 2822 date string only
+    val from: String = ""     // From header value
+)
 
 interface EmailParser {
-    suspend fun parseEmailBatch(emails: List<RawEmailData>): List<JobApplication>
+    suspend fun parseEmailBatch(emails: List<RawEmailData>): List<ParsedEmailInfo>
 }
 
 class MockEmailParserImpl : EmailParser {
-    override suspend fun parseEmailBatch(emails: List<RawEmailData>): List<JobApplication> {
+    override suspend fun parseEmailBatch(emails: List<RawEmailData>): List<ParsedEmailInfo> {
         return emails.mapNotNull { email ->
             if (email.subject.contains("Google", ignoreCase = true)) {
-                JobApplication(
-                    companyName = "Google",
-                    jobTitle = "Software Engineer",
-                    dateApplied = email.date,
-                    status = "Interview Scheduled",
-                    lastUpdate = email.date,
+                ParsedEmailInfo(
+                    sourceEmailId = email.emailId,
+                    companyName   = "Google",
+                    jobTitle      = "Software Engineer",
+                    status        = "Interview Scheduled",
+                    dateStr       = email.date,
+                    dateEpochMs   = 0L,
                     recruiterEmail = "recruiting@google.com",
-                    notes = "Mock parsed from batched subject: ${email.subject}"
+                    snippet       = email.body
                 )
             } else null
         }

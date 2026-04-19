@@ -76,16 +76,27 @@ class RealGmailSyncManagerImpl(
                     val headers = payload?.headers
                     val subject = headers?.find { it.name.equals("Subject", ignoreCase = true) }?.value ?: ""
                     val dateStr = headers?.find { it.name.equals("Date", ignoreCase = true) }?.value ?: ""
+                    val from = headers?.find { it.name.equals("From", ignoreCase = true) }?.value ?: ""
                     val bodyStr = getPlainTextBody(payload)
-                    
-                    // Attach msg.id into RawEmailData strictly for insertion into the db later
-                    rawBatch.add(RawEmailData(subject = subject, body = bodyStr, date = dateStr + "||${msg.id}"))
+
+                    rawBatch.add(RawEmailData(emailId = msg.id, subject = subject, body = bodyStr, date = dateStr, from = from))
                 }
 
                 if (rawBatch.isNotEmpty() && isActive) {
-                    val batchedApplications = emailParser.parseEmailBatch(rawBatch)
-                    if (batchedApplications.isNotEmpty()) {
-                        repository.insertApplications(batchedApplications)
+                    val parsed: List<ParsedEmailInfo> = emailParser.parseEmailBatch(rawBatch)
+                    if (parsed.isNotEmpty()) {
+                        repository.insertApplications(parsed.map { info ->
+                            com.pranay.jobtracker.data.JobApplication(
+                                companyName    = info.companyName,
+                                jobTitle       = info.jobTitle,
+                                dateApplied    = info.dateStr,
+                                status         = info.status,
+                                lastUpdate     = info.dateStr,
+                                recruiterEmail = info.recruiterEmail,
+                                notes          = null,
+                                emailId        = info.sourceEmailId
+                            )
+                        })
                     } else {
                         repository.insertApplications(listOf(
                             com.pranay.jobtracker.data.JobApplication(

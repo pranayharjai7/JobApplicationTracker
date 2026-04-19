@@ -17,7 +17,16 @@ class JobApplicationRepository @Inject constructor(
     suspend fun insertApplications(applications: List<JobApplication>) {
         dao.insertApplications(applications)
     }
-    
+
+    suspend fun insertSingleApplication(application: JobApplication): Long =
+        dao.insertSingleApplication(application)
+
+    suspend fun findByNormalizedKey(normalizedCompany: String, normalizedTitle: String): JobApplication? =
+        dao.findByNormalizedKey(normalizedCompany, normalizedTitle)
+
+    suspend fun updateApplicationStatus(id: Int, status: String, lastUpdatedAt: Long, lastUpdate: String, summary: String?) =
+        dao.updateStatusAndTimestamp(id, status, lastUpdate, lastUpdatedAt, summary)
+
     suspend fun clearAll() {
         dao.deleteAll()
     }

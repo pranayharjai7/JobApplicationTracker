@@ -1,17 +1,23 @@
 package com.pranay.jobtracker.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pranay.jobtracker.data.EmailEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,6 +26,7 @@ fun ApplicationDetailScreen(
     viewModel: ApplicationDetailViewModel = hiltViewModel()
 ) {
     val application by viewModel.application.collectAsState()
+    val events by viewModel.events.collectAsState()
 
     Scaffold(
         topBar = {
@@ -44,11 +51,12 @@ fun ApplicationDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(app.jobTitle, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Badge(app.status)
                     Text("Applied: ${app.dateApplied}", color = Color.Gray)
@@ -64,11 +72,59 @@ fun ApplicationDetailScreen(
 
                 Text("AI Application Summary", fontWeight = FontWeight.Bold, color = Color.LightGray)
                 Text(
-                    text = app.notes ?: "No summary available.", 
+                    text = app.summary ?: app.notes ?: "No summary available.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFFE0E0E0)
                 )
+
+                if (events.isNotEmpty()) {
+                    HorizontalDivider(color = Color(0xFF333333))
+                    Text("Email Timeline", fontWeight = FontWeight.Bold, color = Color.LightGray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    events.forEach { event ->
+                        EmailEventItem(event)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+fun EmailEventItem(event: EmailEvent) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+            .padding(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Badge(status = event.detectedStatus)
+            Text(
+                text = event.date,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFFA0A0A0)
+            )
+        }
+        if (!event.summary.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = event.summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFE0E0E0)
+            )
+        } else if (event.snippet.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = event.snippet.take(150),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFA0A0A0)
+            )
         }
     }
 }
