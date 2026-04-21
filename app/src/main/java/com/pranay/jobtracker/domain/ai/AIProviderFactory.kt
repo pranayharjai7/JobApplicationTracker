@@ -7,8 +7,18 @@ import javax.inject.Singleton
 @Singleton
 class AIProviderFactory @Inject constructor() {
     
+    private var testProviders: List<AIProvider>? = null
+
+    // For testing
+    constructor(providers: List<AIProvider>) : this() {
+        this.testProviders = providers
+    }
+
     fun getProvider(): AIProvider {
+        if (testProviders != null) return FallbackAIProvider(testProviders!!)
+
         val configuredProviders = mutableListOf<AIProvider>()
+        // ... rest of the logic
 
         // Order specified by user requirement: Groq -> Gemini -> OpenRouter
         if (BuildConfig.GROQ_API_KEY.isNotBlank()) {

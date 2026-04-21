@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -182,7 +183,10 @@ fun DashboardScreen(
                                 }
                             }
                         }
-                        IconButton(onClick = { showSmartFilterSheet = true }) {
+                        IconButton(
+                            onClick = { showSmartFilterSheet = true },
+                            modifier = Modifier.testTag("smart_filters_button")
+                        ) {
                             Icon(Icons.Default.Star, stringResource(R.string.smart_filters), tint = Color(0xFF5C6BC0))
                         }
                     }
@@ -572,19 +576,20 @@ fun SmartFilterSheet(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1E1E1E),
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        modifier = Modifier.fillMaxHeight(0.85f)
+        modifier = Modifier.fillMaxHeight(0.85f).testTag("smart_filter_sheet")
     ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .testTag("smart_filter_sheet_content"),
             contentPadding = PaddingValues(bottom = 32.dp)
         ) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
                     Icon(Icons.Default.Star, contentDescription = "AI", tint = Color(0xFF5C6BC0))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.smart_suggestions), style = MaterialTheme.typography.titleLarge, color = Color.White)
+                    Text(stringResource(R.string.smart_suggestions), style = MaterialTheme.typography.titleLarge, color = Color.White, modifier = Modifier.testTag("smart_suggestions_header"))
                 }
                 
                 if (isFetchingAi) {
@@ -633,7 +638,7 @@ fun SmartFilterSheet(
             }
 
             item {
-                Text("Status", style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(bottom = 8.dp))
+                Text("Status", style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(bottom = 8.dp).testTag("status_filter_header"))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 24.dp)) {
                     items(ApplicationStage.values()) { stage ->
                         val isSelected = selectedStages.contains(stage)
@@ -642,6 +647,7 @@ fun SmartFilterSheet(
                             selected = isSelected,
                             onClick = { viewModel.toggleStageFilter(stage) },
                             label = { Text(stage.label) },
+                            modifier = Modifier.testTag("filter_chip_${stage.name}"),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = stageColor.copy(alpha = 0.2f),
                                 selectedLabelColor = stageColor,
