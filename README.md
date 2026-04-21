@@ -19,8 +19,9 @@ An intelligent Android application built with **Kotlin** and **Jetpack Compose**
     -   **Privacy-First:** Dedicated Privacy Policy access within the app.
     -   **Localization:** Multi-language support for key UI components.
 -   **🔒 Secure & Private:** 
+    -   **Biometric Security:** Optional biometric lock (Fingerprint/Face) to protect your job search data.
     -   **On-Device Processing:** Scanning and matching of emails happen primarily on your device.
-    -   **Local-First Storage:** Applications and statuses are stored in a secure on-device **Room Database**.
+    -   **Encrypted Storage:** Applications and statuses are stored in a secure on-device **Room Database** encrypted with **SQLCipher** and **AES-256**.
     -   **Data Integrity:** We **never** sell, rent, or trade your Gmail data. Information is only sent to AI providers for extraction and is not used for model training.
     -   **Google Limited Use:** Fully compliant with [Google API Service User Data Policy](https://developers.google.com/terms/api-services-user-data-policy).
     -   **Full Control:** Wipe all data or remove accounts at any time from the app settings.
@@ -34,7 +35,8 @@ An intelligent Android application built with **Kotlin** and **Jetpack Compose**
     -   Google AI SDK (Gemini Flash)
     -   OpenRouter API
 -   **Dependency Injection:** [Hilt](https://developer.android.com/training/dependency-injection/hilt-android)
--   **Database:** [Room](https://developer.android.com/training/data-storage/room) with KSP and custom Migrations
+-   **Database:** [Room](https://developer.android.com/training/data-storage/room) with KSP and **SQLCipher** for encryption
+-   **Security:** AndroidX Biometric, EncryptedSharedPreferences (Security-Crypto)
 -   **Networking:** Gmail API, Retrofit/HttpURLConnection for AI Providers
 -   **Architecture:** MVVM with Clean Architecture principles
 
