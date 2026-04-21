@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pranay.jobtracker.data.EmailEvent
 import com.pranay.jobtracker.data.ApplicationStage
+import com.pranay.jobtracker.util.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +78,8 @@ fun ApplicationDetailScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     val stageEnum = runCatching { ApplicationStage.valueOf(app.stage) }.getOrDefault(ApplicationStage.APPLIED)
                     Badge(stage = stageEnum)
-                    Text(stringResource(R.string.applied_on, app.dateApplied), color = Color.Gray)
+                    val appliedDate = if (app.createdAt > 0) DateUtils.formatFull(app.createdAt) else app.dateApplied
+                    Text(stringResource(R.string.applied_on, appliedDate), color = Color.Gray)
                 }
 
                 HorizontalDivider(color = Color(0xFF333333))
@@ -135,7 +137,7 @@ fun EmailEventItem(event: EmailEvent, accountColor: Color) {
                 Badge(stage = eventStage)
             }
             Text(
-                text = event.date,
+                text = if (event.dateEpochMs > 0) DateUtils.formatFull(event.dateEpochMs) else event.date,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFFA0A0A0)
             )

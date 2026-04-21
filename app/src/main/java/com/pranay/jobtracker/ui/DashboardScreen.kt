@@ -36,6 +36,9 @@ import com.google.android.gms.common.api.Scope
 import com.google.api.services.gmail.GmailScopes
 import com.pranay.jobtracker.data.JobApplication
 import com.pranay.jobtracker.data.AccountInfo
+import com.pranay.jobtracker.data.EmailEvent
+import com.pranay.jobtracker.data.ApplicationStage
+import com.pranay.jobtracker.util.DateUtils
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
@@ -45,7 +48,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
-import com.pranay.jobtracker.data.ApplicationStage
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -432,7 +434,8 @@ fun ApplicationCard(app: JobApplication, accountColor: Color, onClick: (Int) -> 
             ) {
                 val stageEnum = runCatching { ApplicationStage.valueOf(app.stage) }.getOrDefault(ApplicationStage.APPLIED)
                 Badge(stage = stageEnum)
-                Text(app.dateApplied, color = Color(0xFFA0A0A0), style = MaterialTheme.typography.bodySmall)
+                val displayDate = if (app.lastUpdatedAt > 0) DateUtils.formatRelative(app.lastUpdatedAt) else DateUtils.formatRelative(app.createdAt)
+                Text(displayDate, color = Color(0xFFA0A0A0), style = MaterialTheme.typography.bodySmall)
             }
             if (!app.subStatus.isNullOrBlank() && app.subStatus != app.status) {
                 Spacer(modifier = Modifier.height(8.dp))
