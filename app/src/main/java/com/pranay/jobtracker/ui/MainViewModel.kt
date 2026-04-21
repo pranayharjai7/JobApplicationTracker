@@ -54,7 +54,8 @@ class MainViewModel @Inject constructor(
     private val metaRepository: com.pranay.jobtracker.data.SyncMetadataRepository,
     val accountRepository: com.pranay.jobtracker.data.AccountRepository,
     private val eventRepository: com.pranay.jobtracker.data.EmailEventRepository,
-    private val aiProviderFactory: com.pranay.jobtracker.domain.ai.AIProviderFactory
+    private val aiProviderFactory: com.pranay.jobtracker.domain.ai.AIProviderFactory,
+    private val securityManager: com.pranay.jobtracker.security.SecurityManager
 ) : ViewModel() {
 
     val activeAccountFlow = accountRepository.activeAccountIdFlow
@@ -79,6 +80,8 @@ class MainViewModel @Inject constructor(
     
     val aiSmartFilters = MutableStateFlow<List<SmartFilterSuggestion>?>(null)
     val isFetchingAiFilters = MutableStateFlow(false)
+    
+    val isBiometricEnabled = MutableStateFlow(securityManager.isBiometricEnabled())
     
     val isJourneyModeEnabled = MutableStateFlow(false)
 
@@ -204,6 +207,12 @@ class MainViewModel @Inject constructor(
 
     fun clearStageFilters() {
         selectedStages.value = emptySet()
+    }
+
+    fun toggleBiometric() {
+        val newVal = !isBiometricEnabled.value
+        securityManager.setBiometricEnabled(newVal)
+        isBiometricEnabled.value = newVal
     }
 
     fun clearAllFilters() {

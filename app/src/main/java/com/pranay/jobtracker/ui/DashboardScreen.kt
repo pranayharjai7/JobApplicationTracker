@@ -74,6 +74,7 @@ fun DashboardScreen(
     val selectedStages by viewModel.selectedStages.collectAsState()
     val applicationJourneys by viewModel.applicationJourneys.collectAsState()
     val isJourneyModeEnabled by viewModel.isJourneyModeEnabled.collectAsState()
+    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
 
     val scope = rememberCoroutineScope()
 
@@ -301,7 +302,9 @@ fun DashboardScreen(
                     googleSignInClient.signOut()
                 }
             },
-            onWipeData = { viewModel.clearDatabase() }
+            onWipeData = { viewModel.clearDatabase() },
+            isBiometricEnabled = isBiometricEnabled,
+            onToggleBiometric = { viewModel.toggleBiometric() }
         )
     }
 

@@ -9,9 +9,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.*
 import android.content.Intent
 import android.net.Uri
@@ -39,7 +40,9 @@ fun AccountSwitcherSheet(
     onAddAccount: () -> Unit,
     onSignOut: (AccountInfo) -> Unit,
     onRemoveAccount: (AccountInfo) -> Unit,
-    onWipeData: () -> Unit
+    onWipeData: () -> Unit,
+    isBiometricEnabled: Boolean,
+    onToggleBiometric: () -> Unit
 ) {
     val context = LocalContext.current
     val privacyPolicyLink = stringResource(R.string.privacy_policy_link)
@@ -118,6 +121,22 @@ fun AccountSwitcherSheet(
                     icon = Icons.Default.Delete,
                     color = Color(0xFFF44336),
                     onClick = { showRemoveDialog = true }
+                )
+
+                ActionItem(
+                    text = "Biometric Lock",
+                    icon = Icons.Default.Fingerprint,
+                    onClick = onToggleBiometric,
+                    trailing = {
+                        Switch(
+                            checked = isBiometricEnabled,
+                            onCheckedChange = { onToggleBiometric() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFF5C6BC0)
+                            )
+                        )
+                    }
                 )
 
                 ActionItem(
@@ -235,7 +254,13 @@ fun AccountItem(account: AccountInfo, isActive: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun ActionItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color = Color.White, onClick: () -> Unit) {
+fun ActionItem(
+    text: String, 
+    icon: androidx.compose.ui.graphics.vector.ImageVector, 
+    color: Color = Color.White, 
+    onClick: () -> Unit,
+    trailing: @Composable (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -253,7 +278,11 @@ fun ActionItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVect
         Text(
             text = text,
             color = color,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
         )
+        if (trailing != null) {
+            trailing()
+        }
     }
 }

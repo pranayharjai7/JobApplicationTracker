@@ -31,12 +31,19 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        securityManager: com.pranay.jobtracker.security.SecurityManager
+    ): AppDatabase {
+        val passphrase = securityManager.getDatabasePassphrase()
+        val factory = net.sqlcipher.database.SupportFactory(passphrase.toByteArray())
+
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
             "job_tracker_db"
-        ).addMigrations(
+        ).openHelperFactory(factory)
+        .addMigrations(
             AppDatabase.MIGRATION_2_3, 
             AppDatabase.MIGRATION_3_4,
             AppDatabase.MIGRATION_4_5,
