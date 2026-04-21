@@ -206,6 +206,12 @@ class MainViewModel @Inject constructor(
         selectedStages.value = emptySet()
     }
 
+    fun clearAllFilters() {
+        selectedCompanies.value = emptySet()
+        timeFilter.value = TimeFilter.ALL
+        selectedStages.value = emptySet()
+    }
+
     fun applySmartFilter(suggestion: SmartFilterSuggestion) {
         if (suggestion.timeFilter != null) timeFilter.value = suggestion.timeFilter
         selectedStages.value = suggestion.stages?.toSet() ?: emptySet()

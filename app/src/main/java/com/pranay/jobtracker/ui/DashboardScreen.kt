@@ -589,10 +589,19 @@ fun SmartFilterSheet(
             contentPadding = PaddingValues(bottom = 32.dp)
         ) {
             item {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
-                    Icon(Icons.Default.Star, contentDescription = "AI", tint = Color(0xFF5C6BC0))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.smart_suggestions), style = MaterialTheme.typography.titleLarge, color = Color.White, modifier = Modifier.testTag("smart_suggestions_header"))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Star, contentDescription = "AI", tint = Color(0xFF5C6BC0))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.smart_suggestions), style = MaterialTheme.typography.titleLarge, color = Color.White)
+                    }
+                    TextButton(onClick = { viewModel.clearAllFilters() }) {
+                        Text("Clear All", color = Color(0xFF5C6BC0))
+                    }
                 }
                 
                 if (isFetchingAi) {
