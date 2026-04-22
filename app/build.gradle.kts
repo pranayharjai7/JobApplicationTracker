@@ -109,6 +109,9 @@ dependencies {
     implementation("com.google.api-client:google-api-client-android:1.33.0")
     implementation("com.google.apis:google-api-services-gmail:v1-rev110-1.25.0")
 
+    // Wear OS Data Layer
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
+
     // Gemini
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("com.google.code.gson:gson:2.10.1")

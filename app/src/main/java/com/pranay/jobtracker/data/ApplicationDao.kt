@@ -21,6 +21,9 @@ interface ApplicationDao {
     @Query("SELECT * FROM applications WHERE id = :id AND accountId = :accountId LIMIT 1")
     fun getApplicationById(id: Int, accountId: String): Flow<JobApplication?>
 
+    @Query("SELECT * FROM applications WHERE id = :id LIMIT 1")
+    suspend fun getApplicationByIdStandalone(id: Int): JobApplication?
+
     @Query("SELECT emailId FROM applications WHERE emailId IN (:emailIds) AND emailId IS NOT NULL AND accountId = :accountId")
     suspend fun getExistingEmailIds(emailIds: List<String>, accountId: String): List<String>
 

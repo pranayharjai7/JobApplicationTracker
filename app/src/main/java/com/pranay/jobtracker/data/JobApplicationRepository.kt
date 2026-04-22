@@ -16,6 +16,8 @@ class JobApplicationRepository @Inject constructor(
 
     fun getApplicationById(id: Int, accountId: String): Flow<JobApplication?> = dao.getApplicationById(id, accountId)
 
+    suspend fun getApplicationByIdStandalone(id: Int): JobApplication? = dao.getApplicationByIdStandalone(id)
+
     suspend fun getExistingEmailIds(emailIds: List<String>, accountId: String): List<String> = dao.getExistingEmailIds(emailIds, accountId)
 
     suspend fun insertApplications(applications: List<JobApplication>) {
@@ -30,6 +32,9 @@ class JobApplicationRepository @Inject constructor(
 
     suspend fun updateApplicationStatus(id: Int, status: String, lastUpdatedAt: Long, lastUpdate: String, summary: String?) =
         dao.updateStatusAndTimestamp(id, status, lastUpdate, lastUpdatedAt, summary)
+
+    suspend fun updateApplication(application: JobApplication) =
+        dao.updateApplication(application)
 
     suspend fun clearAccountData(accountId: String) {
         dao.deleteByAccount(accountId)
